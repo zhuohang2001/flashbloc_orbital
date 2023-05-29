@@ -1,0 +1,14 @@
+{
+    "builds": [
+      {
+        "src": "flashbloc/wsgi.py",
+        "use": "@vercel/python"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "flashbloc/wsgi.py"
+      }
+    ]
+}

@@ -64,7 +64,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware'
 ]
 
-ROOT_URLCONF = 'flashblocproject.urls'
+ROOT_URLCONF = 'flashbloc.urls'
 
 TEMPLATES = [
     {
@@ -82,7 +82,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'flashblocproject.wsgi.application'
+WSGI_APPLICATION = 'flashbloc.wsgi.application'
 
 
 # Database
@@ -95,14 +95,25 @@ WSGI_APPLICATION = 'flashblocproject.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#             'NAME': "postgres",
+#             'USER': "postgres",
+#             'PASSWORD': "Password1234",
+#             'HOST': "localhost",
+#             'PORT': "5432",
+#         }
+#     }
+
 DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': "postgres",
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': "railway",
             'USER': "postgres",
-            'PASSWORD': "Password1234",
-            'HOST': "localhost",
-            'PORT': "5432",
+            'PASSWORD': "YZxKGcX5Ig8c7lZ1Sdev",
+            'HOST': "containers-us-west-97.railway.app",
+            'PORT': "6047",
         }
     }
 
