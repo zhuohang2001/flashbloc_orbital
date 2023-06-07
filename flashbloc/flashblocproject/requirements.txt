@@ -16,6 +16,7 @@ phonenumbers==8.13.11
 postgres==4.0
 psycopg2-binary==2.9.6
 psycopg2-pool==1.1
+pgcli==3.5.0
 PyGreSQL==5.2.4
 PyJWT==2.7.0
 python==3.9.0
