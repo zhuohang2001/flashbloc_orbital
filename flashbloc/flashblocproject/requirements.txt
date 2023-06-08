@@ -19,7 +19,7 @@ phonenumbers==8.13.11
 pip==23.0.1
 python-dev-tools==2023.3.24
 postgres==4.0
-psycopg2==2.9.3
+psycopg2-binary==2.9.3
 psycopg2-pool==1.1
 PyGreSQL==5.2.4
 PyJWT==2.7.0
