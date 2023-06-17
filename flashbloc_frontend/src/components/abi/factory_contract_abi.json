@@ -1,5 +1,18 @@
 [
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "contractAddress",
+				"type": "address"
+			}
+		],
+		"name": "ChannelStarted",
+		"type": "event"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
