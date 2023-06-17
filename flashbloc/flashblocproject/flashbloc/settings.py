@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static', 
     'django_otp.plugins.otp_totp', 
     'two_factor', 
+    "verify_email.apps.VerifyEmailConfig", 
 ]
 
 MIDDLEWARE = [
@@ -69,7 +71,7 @@ ROOT_URLCONF = 'flashbloc.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [""],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -95,27 +97,27 @@ WSGI_APPLICATION = 'flashbloc.wsgi.application'
 #     }
 # }
 
-# DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#             'NAME': "postgres",
-#             'USER': "postgres",
-#             'PASSWORD': "Password1234",
-#             'HOST': "localhost",
-#             'PORT': "5432",
-#         }
-#     }
-
 DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': "railway",
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': "postgres",
             'USER': "postgres",
-            'PASSWORD': "YZxKGcX5Ig8c7lZ1Sdev",
-            'HOST': "containers-us-west-97.railway.app",
-            'PORT': "6047",
+            'PASSWORD': "Password1234",
+            'HOST': "localhost",
+            'PORT': "5432",
         }
     }
+
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': "railway",
+#             'USER': "postgres",
+#             'PASSWORD': "YZxKGcX5Ig8c7lZ1Sdev",
+#             'HOST': "containers-us-west-97.railway.app",
+#             'PORT': "6047",
+#         }
+#     }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -209,3 +211,20 @@ CORS_ALLOW_HEADERS = [
 ]
 
 LOGIN_URL = 'two_factor:login'
+<<<<<<< HEAD
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('EMAIL_ID') 
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PW')
+EMAIL_HOST_USER = 'noreplyflashbloc@gmail.com'
+EMAIL_HOST_PASSWORD = 'lbdnqhtnjgxuasfq'
+
+DEFAULT_FROM_EMAIL = 'noreplyflashbloc@gmail.com'
+
+VERIFICATION_SUCCESS_TEMPLATE =  r'flashbloc\templates\email_verification_successful.html'
+=======
+>>>>>>> 9ca5920176aeaef07a3c488194e9fc54fdbdf410
+
