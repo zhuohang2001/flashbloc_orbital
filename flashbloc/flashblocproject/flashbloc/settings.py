@@ -211,7 +211,6 @@ CORS_ALLOW_HEADERS = [
 ]
 
 LOGIN_URL = 'two_factor:login'
-<<<<<<< HEAD
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -225,5 +224,3 @@ EMAIL_HOST_PASSWORD = 'lbdnqhtnjgxuasfq'
 DEFAULT_FROM_EMAIL = 'noreplyflashbloc@gmail.com'
 
 VERIFICATION_SUCCESS_TEMPLATE =  r'flashbloc\templates\email_verification_successful.html'
-=======
->>>>>>> 9ca5920176aeaef07a3c488194e9fc54fdbdf410
