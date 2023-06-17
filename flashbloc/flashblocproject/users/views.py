@@ -9,8 +9,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from rest_framework import viewsets, generics, mixins, views, status, renderers
 from rest_framework.decorators import action
+from verify_email.email_handler import send_verification_email
 
-
+from .forms import EmailForm
 from .models import Account
 
 class GetUpdateViewSet(mixins.RetrieveModelMixin,
@@ -24,9 +25,12 @@ class CustomUserCreate(APIView):
 
     def post(self, request, format='json'):
         serializer = customUserSerializer(data=request.data)
+        
         if serializer.is_valid():
-            user = serializer.save()
-            if user:
+            form = EmailForm(request.data)
+            inactive_user = send_verification_email(request, form) #KIV do i set user as inactive?
+            # user = serializer.save()
+            if inactive_user:
                 json = serializer.data
                 return Response(json, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

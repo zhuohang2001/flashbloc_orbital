@@ -16,7 +16,7 @@ export const create_channel = async (factory, abi, signer, relevant_info, target
 
 function update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account) {
     return new Promise(function (resolve) {
-        factory.on('ProjectStarted', (channel_address) => {
+        factory.on('ProjectStarted', (channel_address) => {//what is projectStarted
             data = {
                 "walletAddress": user_account.address, 
                 "targetAddress": target_account.address, 
