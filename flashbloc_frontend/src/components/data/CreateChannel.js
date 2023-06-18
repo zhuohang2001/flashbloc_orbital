@@ -2,12 +2,13 @@ import React, { Component, Fragment, useState } from 'react';
 import { addProposal } from '../../state_reducers/ContractReducer';
 import { connect, useSelector } from 'react-redux';
 import { ethers } from 'ethers'
-import project_abi from '../project_abi.json'
-import getCookie from '../csrf'
-import { projectAddress } from '../factoryMethods';
+// import project_abi from '../project_abi.json'
+import getCookie from '../../csrf.js'
+import { create_channel } from '../../contract_methods/factory_methods.js';
 import "regenerator-runtime/runtime.js";
 import { useDispatch } from 'react-redux';
 import { Form } from "react-bootstrap";
+import { addAccountChannel } from '../../state_reducers/AccountReducer.js';
 
 
 export class CreateChannelForm extends Component {
@@ -34,7 +35,7 @@ export class CreateChannelForm extends Component {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
         const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
-        this.props.addAccountChannel({"channel": channel_address})
+        this.props.addAccountChannel({"channel": channel_address})``
     }
 
     // onSubmit = async (e) => {

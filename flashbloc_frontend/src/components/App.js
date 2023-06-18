@@ -1,13 +1,22 @@
 
 import React, { Component, Fragment } from 'react';
 import ReactDOM from 'react-dom/client';
+import Register from './auth/register';
+import Login from './auth/login';
+import Logout from './auth/logout';
 
 import Dashboard from './data/Dashboard';
 // import Header from './layout/Header'
-import Register from './auth/register';
 import Home from './layout/home';
+import CreateChannel from './data/CreateChannel';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import styles from '../style';
+
+import Header from './layout/header';
+import Footer from './layout/footer';
+
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+
 
 
 // function App() {
@@ -38,10 +47,27 @@ class App extends Component {
     return (
       <div className={`bg-[#00040f] ${styles.flexStart}`}>
         <div className={`${styles.boxWidth}`}>
-          <Home />
+          <div className="bg-[#00040f]  w-full overflow-hidden">
+                  <div className={`bg-[#00040f] ${styles.paddingX} ${styles.flexCenter}`}>
+                      <div className={`bg-[#00040f] ${styles.boxWidth}`}>
+                          <Header />
+                      </div>
+                  </div>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/logout" element={<Logout />} />
+                    <Route path="/createChannel" element={<CreateChannel/>} />
+                  </Routes>
+              <div className={`bg-[#00040f] ${styles.paddingX} ${styles.flexCenter}`}>
+                  <div className={`${styles.boxWidth}`}>
+                      <Footer />
+                  </div>
+              </div>
+          </div>
         </div>
       </div>
-      
     );
   }
 }

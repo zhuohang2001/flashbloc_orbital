@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime.js";
 import {ethers} from 'ethers'
-import getCookie from './csrf'
+import getCookie from '../csrf.js'
 import { JsonRpcBatchProvider } from "@ethersproject/providers";
 
 
@@ -17,22 +17,22 @@ export const create_channel = async (factory, abi, signer, relevant_info, target
 function update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account) {
     return new Promise(function (resolve) {
         factory.on('ProjectStarted', (channel_address) => {//what is projectStarted
-            data = {
+            const data = {
                 "walletAddress": user_account.address, 
                 "targetAddress": target_account.address, 
                 "initiatorBalance": relevant_info.user_amount, 
                 "targetEmail": target_account.email
             }
-            fetch('/newChannel/', {
-                method: 'POST', 
-                headers: {
-                'Accept': 'application/json', 
-                'Content-Type': 'application/json', 
-                'X-CSRFToken': getCookie('csrftoken')
-                }, 
-                body: data
-            })
-            .then(data => console.log(data)) //how do i check whether POST request is successful
+            // fetch('/newChannel/', {
+            //     method: 'POST', 
+            //     headers: {
+            //     'Accept': 'application/json', 
+            //     'Content-Type': 'application/json', 
+            //     'X-CSRFToken': getCookie('csrftoken')
+            //     }, 
+            //     body: data
+            // })
+            // .then(data => console.log(data)) //how do i check whether POST request is successful
 
             resolve(channel_address)
         })

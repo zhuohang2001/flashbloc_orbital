@@ -10,6 +10,7 @@ import Button from '@material-ui/core/Button';
 
 import { useDispatch, useSelector } from 'react-redux'
 import { currentLoginAccount, resetLoginAccount, toggleLoginState } from '../../state_reducers/LoginAccountReducer';
+import ConnectWeb3 from '../contract.js';
 
 import FlashblocLogo from '../../assets/flashbloc_logo.png'
 
@@ -109,6 +110,7 @@ function Header() {
 					>
 						Logout
 					</Button>
+					{loginAccount.walletAddress && <ConnectWeb3/>}
 				</Toolbar>
 			</AppBar>
 		</React.Fragment>

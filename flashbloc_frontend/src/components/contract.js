@@ -1,31 +1,35 @@
 import React, { Component } from 'react';
 import {ethers} from 'ethers'
 import { connect } from 'react-redux';
-// import { addFactory } from '../features/ContractReducer'
-import factory_abi from '.abi/factory_contract_abi.json'
-import channel_abi from '.abi/contract_abi.json'
+import { addFactory } from '../state_reducers/ContractReducer';
+import factory_abi from './abi/factory_contract_abi.json';
+import channel_abi from './abi/contract_abi.json';
 import { FcApproval } from "react-icons/fc";
 
 
 
 
-const contractAddress="0x1ad4fB9633991C85a9Ef5eC4d05aEF359aC5CB75";
+const contractAddress="0x6BF6B56cA8E22D5364a42A2a883aaF6a00f14A2e";
 
 export class Contract extends Component {
   constructor (props) {
     super(props)
-    this.connectWalletHandler()
-    console.log('connected')
+    this.state = {
+      defaultAccount: null, 
+      // provider: null, 
+      signer: null, 
+      factory: null, 
+      // factory_abi: null, 
+      // project_abi: null, 
+  }
   }
 
-  state = {
-    defaultAccount: null, 
-    // provider: null, 
-    signer: null, 
-    factory: null, 
-    // factory_abi: null, 
-    // project_abi: null, 
-}
+  componentDidMount() {
+    this.connectWalletHandler();
+    console.log("connected haha")
+  }
+
+
 
     connectWalletHandler = () => {
         if (window.ethereum) {
@@ -33,19 +37,20 @@ export class Contract extends Component {
           console.log(window.ethereum)
           window.ethereum.request({method: 'eth_requestAccounts'})
           .then(result => {this.accountChangedHandler(result[0]);
-          () => {document.getElementById('wallet-btn').innerHTML('wallet connected!')};
+          document.getElementById('wallet-btn').innerHTML('Wallet connected!');
         })
-      
         ;
       }
-        else {setErrorMessage('Install MetaMask');}
-      
-      
+        // else {setErrorMessage('Install MetaMask');}
       }
 
-          accountChangedHandler = (newAccount) => {
-      this.setState({['defaultAccount']: newAccount});
-      this.updateEthers();
+    accountChangedHandler = (newAccount) => {
+      if(this.props.currLoginAccount.walletAddress.toLowerCase() == newAccount) {
+        this.setState({['defaultAccount']: newAccount});
+        this.updateEthers();
+      } else {
+        console.log('INVALID ACCOUNT')
+      }
     }
       
 
@@ -58,7 +63,6 @@ export class Contract extends Component {
         this.setState({['signer']: tempSigner});
         // this.setState({['factory_abi']: factory_abi});
         // this.setState({['channel_abi']: channel_abi});
-        console.log((factory_abi))
         let tempContract = new ethers.Contract(contractAddress, factory_abi, tempSigner); //creates new instance of contract of deployed contract
         this.setState({['factory']: tempContract});
         this.props.addFactory(this.state)
@@ -74,4 +78,10 @@ export class Contract extends Component {
       }
 }
 
-export default connect(null, { addFactory })(Contract);
+const mapStateToProps = state => {
+  return {
+      currLoginAccount:  state.loginAccount.value.current, 
+  }
+}
+
+export default connect(mapStateToProps, { addFactory })(Contract);
