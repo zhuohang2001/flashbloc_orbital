@@ -9,7 +9,7 @@ import { FcApproval } from "react-icons/fc";
 
 
 
-const contractAddress="0x6BF6B56cA8E22D5364a42A2a883aaF6a00f14A2e";
+const contractAddress="0xFF77da1E6AA29eFB9C6d995A01B29e1AeeF70D25";
 
 export class Contract extends Component {
   constructor (props) {
@@ -64,8 +64,13 @@ export class Contract extends Component {
         // this.setState({['factory_abi']: factory_abi});
         // this.setState({['channel_abi']: channel_abi});
         let tempContract = new ethers.Contract(contractAddress, factory_abi, tempSigner); //creates new instance of contract of deployed contract
-        this.setState({['factory']: tempContract});
-        this.props.addFactory(this.state)
+        this.setState({['factory']: tempContract}, () => {
+          this.props.addFactory(this.state);
+        });
+        console.log(this.state)
+        // console.log('STATE')
+        // console.log(tempContract)
+        // this.props.addFactory(this.state)
       }
 
       // check what cannot be saved under state, for now seems like (contract, abi, factory) ; what form is provider in? is it an obj or a str?; can objs be saved?

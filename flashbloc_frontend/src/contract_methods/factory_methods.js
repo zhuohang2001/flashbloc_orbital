@@ -9,14 +9,19 @@ import { JsonRpcBatchProvider } from "@ethersproject/providers";
 
 
 export const create_channel = async (factory, abi, signer, relevant_info, target_account, user_account) => {
-    await factory.startChannel(user_account.address, target_account.address, relevant_info.duration, relevant_info.target_amount, {value: relevant_info.user_amount})
-    const channel_address = await update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account)
+    // console.log(factory)
+    // await factory.startChannel(target_account, relevant_info.duration, relevant_info.target_amount, {value: relevant_info.user_amount})
+
+    const tx = await factory.startChannel(target_account, 1000000000000000, 1000000000000000, {value: 1000000000000000})
+    const channel_address = update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account)
+    await tx.wait()
     return channel_address
 };
 
 function update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account) {
+    console.log('running')
     return new Promise(function (resolve) {
-        factory.on('ProjectStarted', (channel_address) => {//what is projectStarted
+        factory.on('ChannelStarted' , (contractAddress) => {//what is projectStarted
             const data = {
                 "walletAddress": user_account.address, 
                 "targetAddress": target_account.address, 
@@ -33,8 +38,9 @@ function update_db_new_channel(factory, relevant_info, abi, signer, target_accou
             //     body: data
             // })
             // .then(data => console.log(data)) //how do i check whether POST request is successful
-
-            resolve(channel_address)
+            // console.log(channel_address)
+            console.log('HI')
+            resolve(contractAddress)
         })
     })
 }

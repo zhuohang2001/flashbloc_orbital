@@ -5,11 +5,14 @@ import { ethers } from 'ethers'
 // import project_abi from '../project_abi.json'
 import getCookie from '../../csrf.js'
 import { create_channel } from '../../contract_methods/factory_methods.js';
+import { recipient_initiate } from '../../contract_methods/channel_methods.js';
+
 import "regenerator-runtime/runtime.js";
 import { useDispatch } from 'react-redux';
 import { Form } from "react-bootstrap";
 import { addAccountChannel } from '../../state_reducers/AccountReducer.js';
 
+import channel_abi from '../abi/contract_abi.json';
 
 export class CreateChannelForm extends Component {
     csrf = getCookie('csrftoken')
@@ -26,15 +29,25 @@ export class CreateChannelForm extends Component {
 
     onChange = (e) => this.setState({[e.target.name]: e.target.value});
 
-    onSubmit = async (e) => {
+    handleSubmit = async () => {
         //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
-        e.preventDefault();
+
         const contracts_info = this.props.contracts
         const target_account = this.props.curr_account
         const user_account = this.props.user_account
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
-        const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
+        // const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
+        const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0x9CF10B269d534F37f75450D7dC6bEfE64378797f", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
+        this.props.addAccountChannel({"channel": channel_address})``
+    }
+
+    handleSubmitRecep = async () => {
+        //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const signer = provider.getSigner()
+        const channelContract = new ethers.Contract("0x9e188856bF4058A45D583F1F4fDc21527beB9e00", channel_abi, signer)
+        const channel_address = await Promise.resolve(recipient_initiate(contracts_info.factory, channel_abi, signer, this.state, "0x9CF10B269d534F37f75450D7dC6bEfE64378797f")) //addr has to be party B
         this.props.addAccountChannel({"channel": channel_address})``
     }
 
@@ -113,8 +126,12 @@ export class CreateChannelForm extends Component {
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" type="submit" onclick={this.onSubmit()}>Submit form</button>
+                    <button class="btn btn-primary" type="submit" onClick={e => {e.preventDefault(); this.handleSubmit()}}>Submit form</button>
                 </form>
+            </div>
+            <br></br>
+            <div>
+                <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleSubmitRecep()}}>Recipient init</button>
             </div>
         </Fragment>
     )
