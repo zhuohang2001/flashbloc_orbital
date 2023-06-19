@@ -5,7 +5,7 @@ import { ethers } from 'ethers'
 // import project_abi from '../project_abi.json'
 import getCookie from '../../csrf.js'
 import { create_channel } from '../../contract_methods/factory_methods.js';
-import { recipient_initiate } from '../../contract_methods/channel_methods.js';
+import { recepient_initiate, declare_close_channel, close_now_channel } from '../../contract_methods/channel_methods.js';
 
 import "regenerator-runtime/runtime.js";
 import { useDispatch } from 'react-redux';
@@ -38,17 +38,31 @@ export class CreateChannelForm extends Component {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
         // const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
-        const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0x9CF10B269d534F37f75450D7dC6bEfE64378797f", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
-        this.props.addAccountChannel({"channel": channel_address})``
+        const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
+        console.log(channel_address)
+        this.props.addAccountChannel({"channel": channel_address})
     }
 
     handleSubmitRecep = async () => {
         //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
-        const channelContract = new ethers.Contract("0x9e188856bF4058A45D583F1F4fDc21527beB9e00", channel_abi, signer)
-        const channel_address = await Promise.resolve(recipient_initiate(contracts_info.factory, channel_abi, signer, this.state, "0x9CF10B269d534F37f75450D7dC6bEfE64378797f")) //addr has to be party B
-        this.props.addAccountChannel({"channel": channel_address})``
+        const channelContract = new ethers.Contract("0x410E823A7D897Fb5d923EeAB7aCB62f7D71d40bD", channel_abi, signer) //contract shd be saved on state
+        const channel_address = await Promise.resolve(recepient_initiate(channelContract, channel_abi, signer, this.state, "0x9CF10B269d534F37f75450D7dC6bEfE64378797f")) //addr has to be party B
+    }
+
+    handleDeclareClose = async () => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const signer = provider.getSigner()
+        const channelContract = new ethers.Contract("0x410E823A7D897Fb5d923EeAB7aCB62f7D71d40bD", channel_abi, signer) //contract shd be saved on state
+        await Promise.resolve(declare_close_channel(channelContract))
+    }
+
+    handleCloseNow = async () => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const signer = provider.getSigner()
+        const channelContract = new ethers.Contract("0x410E823A7D897Fb5d923EeAB7aCB62f7D71d40bD", channel_abi, signer) //contract shd be saved on state
+        await Promise.resolve(close_now_channel(channelContract))
     }
 
     // onSubmit = async (e) => {
@@ -132,6 +146,14 @@ export class CreateChannelForm extends Component {
             <br></br>
             <div>
                 <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleSubmitRecep()}}>Recipient init</button>
+            </div>
+            <br></br>
+            <div>
+                <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleDeclareClose()}}>Declare close</button>
+            </div>
+            <br></br>
+            <div>
+                <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleCloseNow()}}>Close now</button>
             </div>
         </Fragment>
     )
