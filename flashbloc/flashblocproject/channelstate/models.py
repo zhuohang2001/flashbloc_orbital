@@ -6,6 +6,8 @@ from django.conf import settings
 
 class Channel(models.Model):
     STATUS_CHOICES = [
+        ("RQ", "REQUESTED"), 
+        ("APV", "APPROVED"), 
         ("OP", "OPENED"), 
         ("INIT", "INITIATED"), 
         ("LK", "LOCKED"), 
@@ -15,7 +17,7 @@ class Channel(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="recipient")
     status = models.CharField(null=True, blank=True, choices=STATUS_CHOICES, max_length=50)
     total_balance = models.DecimalField(decimal_places=17, blank=True, null=True, max_digits=19)
-    channel_address = models.CharField(max_length=200, blank=True, primary_key=True)
+    channel_address = models.CharField(max_length=200, blank=True) #to be committed
     status_expiry = models.DateTimeField(null=True, blank=True) 
 
 

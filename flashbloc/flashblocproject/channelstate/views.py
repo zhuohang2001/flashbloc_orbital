@@ -13,7 +13,7 @@ from django.db import transaction
 
 from . import serializers, models
 from users.models import Account
-from payments.models import Topup_receipt
+from payments.models import TopupReceipt
 
 '''
 --> if signature involved, use POST
@@ -37,12 +37,12 @@ class channelStateView(GetUpdateViewSet):
     serializer_class = serializers.ChannelSerializer
 
     closed_filter = (~Q(status="CD"))
-
-    @action(methods=["get"], url_path=r"userChannels/<str:walletAddress>") #pls check if detail is needed as a params
+    queryset = Account.objects.all()
+    @action(detail=False, methods=["get"]) #pls check if detail is needed as a params
     def get_userChannels(self, request, *args, **kwargs):
         try:
             result = []
-            curr_user = Account.objects.get(self.kwargs.get('walletAddress')).first()
+            curr_user = Account.objects.get(wallet_address=request.GET.get('walletAddress', ''))
             owned_channels = models.Channel.objects.filter(~Q(status="CD"), Q(initator=curr_user) | Q(recipient=curr_user))
             result.append(self.get_serializer(owned_channels, many=True).data)
 
@@ -51,7 +51,7 @@ class channelStateView(GetUpdateViewSet):
         except Exception as e:
             return Response(e.args, status=status.HTTP_404_NOT_FOUND)
 
-    @action(methods=["get"], url_path=r"targetChannel/<str:walletAddress>/<str:targetAddress>")
+    @action(detail=False, methods=["get"], url_path=r"targetChannel/<str:walletAddress>/<str:targetAddress>")
     def get_targetChannel(self, request, *args, **kwargs):
         try:
             result = []
@@ -64,7 +64,7 @@ class channelStateView(GetUpdateViewSet):
         except Exception as e:
             return Response(e.args, status=status.HTTP_404_NOT_FOUND)
 
-    @action(methods=['get'], url_path=r"getPath/<str:walletAddress>/<str:targetAddress>/(?P<amount>\d+\.\d+)$")
+    @action(detail=False, methods=['get'], url_path=r"getPath/<str:walletAddress>/<str:targetAddress>/(?P<amount>\d+\.\d+)$")
     def get_path(self, request, *args, **kwargs):
         try:
             amount = float(self.kwargs.get('amount'))
@@ -140,17 +140,19 @@ class channelStateView(GetUpdateViewSet):
         except Exception as e:
             return Response(e.args, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path=r'newChannel')
-    def createChannel(self, request, *args, **kwargs):
+    @action(detail=False, methods=["POST"]) #DONE
+    def reqChannel(self, request, *args, **kwargs):
         #maybe in future allow other forms of identifying target acc other than address
         try:
             data = self.request.data
             walletAddress = data.get('walletAddress')
             targetAddress = data.get('targetAddress')
+            walletObj = Account.objects.get(wallet_address=walletAddress)
+            targetObj = Account.objects.get(wallet_address=targetAddress)
             initiatorBalance = data.get('initiatorBalance')
             targetEmail = data.get('targetEmail')
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
-            newChannel = models.Channel(initator=walletAddress, recipient=targetAddress, status="OP", totalBalance=initiatorBalance)
+            newChannel = models.Channel(initator=walletObj, recipient=targetObj, status="RQ", totalBalance=initiatorBalance)
             newChannel.save()
             newLedger = models.Ledger(channel=newChannel) #does this work? (should work)
             newLedger.save()
@@ -159,12 +161,89 @@ class channelStateView(GetUpdateViewSet):
             '''
             res = self.get_serializer(newChannel, many=False).data
             return Response(res, status=status.HTTP_200_OK)
+    
+
 
         except Exception as e:
             return Response(e.args, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path=r'closeChannel')
+    @action(detail=False, methods=["PATCH"]) #DONE
+    def approveChannel(self, request, *args, **kwargs):
+        #maybe in future allow other forms of identifying target acc other than address
+        try:
+            data = self.request.data
+            initiatorAddress = data.get('initiatorAddress')
+            recipientAddress = data.get('receipientAddress')
+            initiatorObj = Account.objects.get(wallet_address=initiatorAddress)
+            recipientObj = Account.objects.get(wallet_address=recipientAddress)
+            targetEmail = data.get('targetEmail')
+            #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
+            currChannel = models.Channel.get(Q(initiator=initiatorObj), Q(recipient=recipientObj))
+            currChannel.status = "APV"
+            currChannel.save()
+
+            '''
+            write handler to send email of channel details with recipient
+            '''
+            res = self.get_serializer(currChannel, many=False).data
+            return Response(res, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(e.args, status=status.HTTP_400_BAD_REQUEST) #does it need to change?
+
+    @action(detail=False, methods=["PATCH"]) #DONE
+    def createChannel(self, request, *args, **kwargs):
+        #maybe in future allow other forms of identifying target acc other than address
+        try:
+            data = self.request.data
+            initiatorAddress = data.get('initiatorAddress')
+            recipientAddress = data.get('receipientAddress')
+            channelAddress = data.get('channelAddress')
+            initiatorObj = Account.objects.get(wallet_address=initiatorAddress)
+            recipientObj = Account.objects.get(wallet_address=recipientAddress)
+            targetEmail = data.get('targetEmail')
+            #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
+            currChannel = models.Channel.get(Q(initiator=initiatorObj), Q(recipient=recipientObj))
+            currChannel.status = "OP"
+            currChannel.channel_address = channelAddress
+            currChannel.save()
+
+            '''
+            write handler to send email of channel details with recipient
+            '''
+            res = self.get_serializer(currChannel, many=False).data
+            return Response(res, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(e.args, status=status.HTTP_400_BAD_REQUEST) #does it need to change?
+        
+    @action(detail=False, methods=["PATCH"])
     def closeChannel(self, request, *args, **kwargs):
+        try:
+            status_change = False
+            data = self.request.data
+            walletAddress = data.get('walletAddress')
+            targetAddress = data.get('targetAddress')
+            if models.Channel.objects.filter(initiator__in=[str(walletAddress), str(targetAddress)], recipient__in=[str(walletAddress), str(targetAddress)]).exists():
+                targetChannel = models.Channel.objects.filter(initiator__in=[str(walletAddress), str(targetAddress)], recipient__in=[str(walletAddress), str(targetAddress)]).first()
+                targetChannel.status = "CD"
+                targetChannel.total_balance = 0.0
+                targetChannel.save()
+            
+            if targetChannel.status == "CD":
+                status_change = True
+            
+            res_dic = {"success": status_change}
+            res_dict = json.dumps(res_dic)
+            
+            return Response(res_dict, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(e.args, status=status.HTTP_400_BAD_REQUEST)
+
+
+    @action(detail=False, methods=['POST'], url_path=r'closeChannel')
+    def declareCloseChannel(self, request, *args, **kwargs):
         '''
         should transaction.atomic be added?
         '''
