@@ -79,62 +79,6 @@ export class CreateChannelForm extends Component {
         await Promise.resolve(close_now_channel(channelContract))
     }
 
-    // onSubmit = async (e) => {
-    //     e.preventDefault();
-    //     const Address = await this.getContractInformation(this.state.duration, this.state.price)
-    //     this.setState({['address']: Address})
-    //     this.setState({['image']: URL.createObjectURL(this.state.image)})
-    //     const { name, image, price, address, tokenId, description, duration } = this.state;
-    //     const proposal  = { name, price, address, description, image }
-    //     console.log(address, 'THIS IS CURRENT ADDRESS')
-    //     this.props.addProposal(proposal)
-    //     console.log('proposal added')
-    //     this.setState({
-    //         name:'', 
-    //         image:'', 
-    //         price:'', 
-    //         address:'', 
-    //         tokenId:'', 
-    //         description:'', 
-    //         duration:'',
-    //     });
-    // };
-
-    // getContractInformation = async (Duration, Price) => {
-
-    //         var time = 100;
-    //         const initFields = this.props.data
-    //         const factory = initFields.factory
-    //         let tempProvider = new ethers.providers.Web3Provider(window.ethereum)
-    //         let tempSigner = tempProvider.getSigner()
-    //         const Address = await Promise.resolve(newChannelAddress(factory, initFields.project_abi, initFields.signer, this.state)) // need to resolve promise as async function returns Promise
-    //         console.log("getcontract info " + Address)
-    //         return Address
-
-    // };
-    
-    // const SearchBar = () => {
-    //     const [searchQuery, setSearchQuery] = useState('');
-    //     const [filteredData, setFilteredData] = useState([]);
-      
-    //     const allData = useSelector(state => state.data); // Access the data from the Redux store using useSelector
-        
-      
-    //     // Render the filtered data or perform any other actions based on the filteredData state
-      
-    //     return (
-    //       <div className="search-bar">
-    //         <input
-    //           type="text"
-    //           placeholder="Search..."
-    //           value={searchQuery}
-    //           onChange={handleSearch}
-    //         />
-    //         {/* Add additional search button or icon if needed */}
-    //       </div>
-    //     );
-    //   };
-
     render() {//modify search name field to filter for recipient account obj
     return (
         <Fragment>
@@ -205,86 +149,12 @@ export class CreateChannelForm extends Component {
              <div style={{ textAlign: 'center', marginTop: '20px' }}>
                <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleCloseNow() }}>Close now</button>
            </div>
-
-            {/* </div>
-            <br></br>
-            <div>
-                <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleSubmitRecep()}}>Recipient init</button>
-            </div>
-            <br></br>
-            <div>
-                <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleDeclareClose()}}>Declare close</button>
-            </div>
-            <br></br>
-            <div>
-                <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleCloseNow()}}>Close now</button>
-            </div> */}
             
         </Fragment>
     )
                     }                 
 }
-//         render() {
-//         return (
-//             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-//             <Fragment>
-//             <div>
-//                 <h2 style={{ color: 'white', textAlign: 'center' }}>Create Channel</h2>
-//             <div className="col-lg-4 mb-4">
-//               <input type="text" className="form-control" id="validationCustom01" placeholder="Search for recipient account" name="searchQuery" onChange={this.onChange} value={this.state.searchQuery} required />
-//               <button className="btn btn-primary" type="submit" onClick={this.handleSearch}>Search</button>
-//             </div>
-//             <form className="needs-validation" noValidate>
-//               <div className="col-lg-4 mb-4">
-//                 <label htmlFor="validationCustom01" style={{ color: 'white' }}>My Deposit</label>
-//                 <input type="number" className="form-control" id="validationCustom01" placeholder="Enter the amount you want to deposit" name="user_amount" onChange={this.onChange} required />
-//                 <div className="valid-feedback" style={{ color: 'white' }}>
-//                   Looks good!
-//                 </div>
-//               </div>
-//               <div className="col-lg-4 mb-4">
-//                 <label htmlFor="validationCustom01" style={{ color: 'white' }}>Other party expected Deposit</label>
-//                 <input type="number" className="form-control" id="validationCustom01" placeholder="Enter the expected amount from the other party" name="target_amount" onChange={this.onChange} required />
-//                 <div className="valid-feedback">
-//                   Looks good!
-//                 </div>
-//               </div>
-//               <div className="col-lg-4 mb-4">
-//                 <label htmlFor="validationCustom01" style={{ color: 'white' }}>Expiry date</label>
-//                 <input type="date" className="form-control" id="validationCustom01" placeholder="Enter the expiration date" name="expiration_date" onChange={this.onChange} required />
-//                 <div className="valid-feedback" style={{ color: 'white' }}>
-//                   Looks good!
-//                 </div>
-//               </div>
-//               <div className="form-group">
-//                 <div className="form-check">
-//                   <input className="form-check-input" type="checkbox" value="" id="invalidCheck" required />
-//                   <label className="form-check-label" htmlFor="invalidCheck" style={{ color: 'white' }}>
-//                     Agree to terms and conditions
-//                   </label>
-//                   <div className="invalid-feedback" style={{ color: 'white' }}>
-//                     You must agree before submitting.
-//                   </div>
-//                 </div>
-//               </div>
-//               <div style={{ textAlign: 'center' }}>
-//                 <button className="btn btn-primary" type="submit" onClick={e => { e.preventDefault(); this.handleSubmit() }}>Submit form</button>
-//               </div>
-//             </form>
-//           </div>
-//           <div style={{ textAlign: 'center', marginTop: '20px' }}>
-//             <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleSubmitRecep() }}>Recipient init</button>
-//           </div>
-//           <div style={{ textAlign: 'center', marginTop: '20px' }}>
-//             <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleDeclareClose() }}>Declare close</button>
-//           </div>
-//           <div style={{ textAlign: 'center', marginTop: '20px' }}>
-//             <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleCloseNow() }}>Close now</button>
-//           </div>
-//         </Fragment>
-//       </div>
-//     );
-//   }
+
 
 const mapStateToProps = state => {
     return {
