@@ -10,9 +10,9 @@ import { JsonRpcBatchProvider } from "@ethersproject/providers";
 
 export const create_channel = async (factory, abi, signer, relevant_info, target_account, user_account) => {
     // console.log(factory)
-    // await factory.startChannel(target_account, relevant_info.duration, relevant_info.target_amount, {value: relevant_info.user_amount})
+    const tx = await factory.startChannel(target_account, relevant_info.duration, relevant_info.target_amount, {value: relevant_info.user_amount})
 
-    const tx = await factory.startChannel(target_account, 1000000000000000, 1000000000000000, {value: 1000000000000000})
+    // const tx = await factory.startChannel(target_account, 1000000000000000, 1000000000000000, {value: 1000000000000000})
     const channel_address = update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account)
     await tx.wait()
     return channel_address

@@ -56,16 +56,20 @@ class channelStateView(GetUpdateViewSet):
     def get_targetChannel(self, request, *args, **kwargs):
         try:
             result = []
-            channelAddress = request.GET.get('channelAddress')
+            print("WAT")
+            channelAddress = request.GET.get('q')
             target_channel = None
             if channelAddress:
-                target_channel = models.Channel.objects.get(channel_address=channelAddress) ##get or 404?
+                try:
+                    target_channel = models.Channel.objects.get(channel_address=channelAddress) ##get or 404?
+                except:
+                    pass
             if not target_channel:
                 currAddress = request.GET.get('currAddress')
-                targetAddress = request.GET.get('targetAddress')
-                curr_account = Account.objects.get(wallet_address=curr_account)
-                target_account = Account.objects.get(wallet_address=target_account)
-                target_channel = models.Channel.objects.filter(~Q(status="CD"), (Q(initator=curr_account) & Q(recipient=target_account)) |
+                targetAddress = request.GET.get('q')
+                curr_account = Account.objects.get(wallet_address=currAddress)
+                target_account = Account.objects.get(wallet_address=targetAddress)
+                target_channel = models.Channel.objects.filter(~Q(status="CD"), (Q(initiator=curr_account) & Q(recipient=target_account)) |
                 (Q(recipient=curr_account) & Q(initiator=target_account))).first()
             result = self.get_serializer(target_channel, many=False).data
             return Response(result, status=status.HTTP_200_OK)

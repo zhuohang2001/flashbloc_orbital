@@ -11,7 +11,7 @@ import "regenerator-runtime/runtime.js";
 import { useDispatch } from 'react-redux';
 import { Form } from "react-bootstrap";
 import { addAccountChannel } from '../../state_reducers/AccountReducer.js';
-
+import axiosInstance from '../axios';
 import channel_abi from '../abi/contract_abi.json';
 
 export class CreateChannelForm extends Component {
@@ -31,7 +31,10 @@ export class CreateChannelForm extends Component {
     onChange = (e) => this.setState({[e.target.name]: e.target.value});
 
     handleSearch = (e) => {
-        const query = e.target.value;
+        axiosInstance.get(`user/searchedAccounts/?q=${this.state.searchQuery}`)
+            .then((response) => {
+                console.log(response)
+            })
         //setSearchQuery(query);
     
         // Filter the data based on the search query
@@ -43,7 +46,7 @@ export class CreateChannelForm extends Component {
         //setFilteredData(filtered);
       };
 
-    handleSubmit = async () => {
+    handleReqChannel = async () => {
         //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
 
         const contracts_info = this.props.contracts
@@ -51,8 +54,9 @@ export class CreateChannelForm extends Component {
         const user_account = this.props.user_account
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
-        // const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
-        const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
+        // const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
+        const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
+
         console.log(channel_address)
         this.props.addAccountChannel({"channel": channel_address})
     }
@@ -136,7 +140,7 @@ export class CreateChannelForm extends Component {
                     </div>
                     </div>
                     <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <button class="btn btn-primary" type="submit" onClick={e => {e.preventDefault(); this.handleSubmit()}}>Submit form</button>
+                    <button class="btn btn-primary" type="submit" onClick={e => {e.preventDefault(); this.handleReqChannel()}}>Submit form</button>
                     </div>
                 </form>
                 </div>

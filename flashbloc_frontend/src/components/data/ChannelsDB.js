@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import axiosInstance from '../axios';
+import { useDispatch, useSelector } from 'react-redux'
+
+
 
 const ContainerPage = () => {
   const paymentStatuses = [
@@ -16,13 +20,26 @@ const ContainerPage = () => {
     { container: 3, status: 'Pending Close' },
   ];
 
+  const loginAccount = useSelector((state) => state.loginAccount.value.current.walletAddress); //get from global state 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearch = () => {
+  const handleSearchChannel = () => {
     // Perform search logic here
+    console.log(loginAccount)
+    console.log('hi')
     // You can filter the paymentStatuses array based on the searchQuery
     // Update the filtered results to display in the respective containers
+    axiosInstance.get(`channelstate/get_targetChannel/?currAddress=${loginAccount}&q=${searchQuery}`)
+      .then((response) => {
+        console.log(response)
+      })
   };
+
+  const handleChannelTransfer = () => {}
+
+  const handleDeclareClose = () => {}
+
+  const handleCloseChannel = () => {}
 
   return (
     <div>
@@ -35,7 +52,7 @@ const ContainerPage = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <button className="btn btn-primary" onClick={handleSearch} style={{ marginLeft: '10px' }}>
+        <button className="btn btn-primary" onClick={handleSearchChannel} style={{ marginLeft: '10px' }}>
           Search
         </button>
       </div>
@@ -59,10 +76,10 @@ const ContainerPage = () => {
               .map((item, index) => (
                 <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
                   <span>User - {item.status}</span>
-                  <button className="btn btn-primary" onClick={handleSearch} style={{ marginLeft: '50px' }}>
+                  <button className="btn btn-primary" onClick={handleChannelTransfer} style={{ marginLeft: '50px' }}>
                     Transfer
                   </button>
-                  <button className="btn btn-primary" onClick={handleSearch} style={{ marginLeft: '10px' }}>
+                  <button className="btn btn-primary" onClick={handleDeclareClose} style={{ marginLeft: '10px' }}>
                     Declare Close
                   </button>
                 </div>
@@ -111,7 +128,7 @@ const ContainerPage = () => {
               .map((item, index) => (
                 <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
                   User - {item.status}
-                  <button className="btn btn-primary" onClick={handleSearch} style={{ marginLeft: '50px' }}>
+                  <button className="btn btn-primary" onClick={handleCloseChannel} style={{ marginLeft: '50px' }}>
                     Close Now
                   </button>
                 </div>
