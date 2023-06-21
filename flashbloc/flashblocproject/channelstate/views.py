@@ -1,6 +1,7 @@
 from inspect import signature
 import json
 from django.http import HttpResponse
+from decimal import Decimal
 
 from django.shortcuts import render
 # Create your views here.
@@ -51,14 +52,22 @@ class channelStateView(GetUpdateViewSet):
         except Exception as e:
             return Response(e.args, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=["get"], url_path=r"targetChannel/<str:walletAddress>/<str:targetAddress>")
+    @action(detail=False, methods=["GET"])
     def get_targetChannel(self, request, *args, **kwargs):
         try:
             result = []
-            curr_user = Account.objects.get(self.kwargs.get('walletAddress')).first()
-            target_channel = models.Channel.objects.filter(~Q(status="CD"), (Q(initator=curr_user) & Q(recipient=self.kwargs.get('targetAddress'))) |
-             (Q(recipient=curr_user) & Q(initiator=self.kwargs.get('targetAddress')))).first()
-            result.append(self.get_serializer(target_channel, many=False).data)
+            channelAddress = request.GET.get('channelAddress')
+            target_channel = None
+            if channelAddress:
+                target_channel = models.Channel.objects.get(channel_address=channelAddress) ##get or 404?
+            if not target_channel:
+                currAddress = request.GET.get('currAddress')
+                targetAddress = request.GET.get('targetAddress')
+                curr_account = Account.objects.get(wallet_address=curr_account)
+                target_account = Account.objects.get(wallet_address=target_account)
+                target_channel = models.Channel.objects.filter(~Q(status="CD"), (Q(initator=curr_account) & Q(recipient=target_account)) |
+                (Q(recipient=curr_account) & Q(initiator=target_account))).first()
+            result = self.get_serializer(target_channel, many=False).data
             return Response(result, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -152,9 +161,9 @@ class channelStateView(GetUpdateViewSet):
             initiatorBalance = data.get('initiatorBalance')
             targetEmail = data.get('targetEmail')
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
-            newChannel = models.Channel(initator=walletObj, recipient=targetObj, status="RQ", totalBalance=initiatorBalance)
+            newChannel = models.Channel(initiator=walletObj, recipient=targetObj, status="RQ", total_balance=initiatorBalance, channel_address="")
             newChannel.save()
-            newLedger = models.Ledger(channel=newChannel) #does this work? (should work)
+            newLedger = models.Ledger(channel=newChannel, latest_initiator_bal=initiatorBalance) #does this work? (should work)
             newLedger.save()
             '''
             write handler to send email of channel details with recipient
@@ -172,13 +181,12 @@ class channelStateView(GetUpdateViewSet):
         #maybe in future allow other forms of identifying target acc other than address
         try:
             data = self.request.data
-            initiatorAddress = data.get('initiatorAddress')
-            recipientAddress = data.get('receipientAddress')
-            initiatorObj = Account.objects.get(wallet_address=initiatorAddress)
-            recipientObj = Account.objects.get(wallet_address=recipientAddress)
-            targetEmail = data.get('targetEmail')
+            currAddress = data.get('currAddress')
+            targetAddress = data.get('targetAddress')
+            currAccount = Account.objects.get(wallet_address=currAddress)
+            targetAccount = Account.objects.get(wallet_address=targetAddress)
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
-            currChannel = models.Channel.get(Q(initiator=initiatorObj), Q(recipient=recipientObj))
+            currChannel = models.Channel.objects.get(Q(initiator=targetAccount), Q(recipient=currAccount))
             currChannel.status = "APV"
             currChannel.save()
 
@@ -196,16 +204,45 @@ class channelStateView(GetUpdateViewSet):
         #maybe in future allow other forms of identifying target acc other than address
         try:
             data = self.request.data
-            initiatorAddress = data.get('initiatorAddress')
-            recipientAddress = data.get('receipientAddress')
+            currAddress = data.get('currAddress')
+            targetAddress = data.get('targetAddress')
+            currAccount = Account.objects.get(wallet_address=currAddress)
+            targetAccount = Account.objects.get(wallet_address=targetAddress)
             channelAddress = data.get('channelAddress')
-            initiatorObj = Account.objects.get(wallet_address=initiatorAddress)
-            recipientObj = Account.objects.get(wallet_address=recipientAddress)
-            targetEmail = data.get('targetEmail')
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
-            currChannel = models.Channel.get(Q(initiator=initiatorObj), Q(recipient=recipientObj))
+            currChannel = models.Channel.objects.get(Q(initiator=currAccount), Q(recipient=targetAccount))
             currChannel.status = "OP"
             currChannel.channel_address = channelAddress
+            currChannel.save()
+
+            '''
+            write handler to send email of channel details with recipient
+            '''
+            res = self.get_serializer(currChannel, many=False).data
+            return Response(res, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(e.args, status=status.HTTP_400_BAD_REQUEST) #does it need to change?
+
+
+    @action(detail=False, methods=["PATCH"]) #DONE
+    def initializeChannel(self, request, *args, **kwargs):
+        #maybe in future allow other forms of identifying target acc other than address
+        try:
+            data = self.request.data
+            currAddress = data.get('currAddress')
+            targetAddress = data.get('targetAddress')
+            currAccount = Account.objects.get(wallet_address=currAddress)
+            targetAccount = Account.objects.get(wallet_address=targetAddress)
+            channelAddress = data.get('channelAddress')
+            #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
+            currChannel = models.Channel.objects.get(Q(status="OP"), Q(recipient=currAccount), 
+                                                     Q(initiator=targetAccount) | Q(channel_address=channelAddress))
+            currLedger = models.Ledger.objects.get(channel=currChannel)
+            currLedger.latest_recipient_bal = Decimal.from_float(data.get('recipientBalance'))
+            currLedger.save()
+            currChannel.status = "INIT"
+            currChannel.total_balance += Decimal.from_float(data.get('recipientBalance'))
             currChannel.save()
 
             '''
@@ -227,7 +264,7 @@ class channelStateView(GetUpdateViewSet):
             if models.Channel.objects.filter(initiator__in=[str(walletAddress), str(targetAddress)], recipient__in=[str(walletAddress), str(targetAddress)]).exists():
                 targetChannel = models.Channel.objects.filter(initiator__in=[str(walletAddress), str(targetAddress)], recipient__in=[str(walletAddress), str(targetAddress)]).first()
                 targetChannel.status = "CD"
-                targetChannel.total_balance = 0.0
+                targetChannel.total_balance = Decimal.from_float(0.0)
                 targetChannel.save()
             
             if targetChannel.status == "CD":
