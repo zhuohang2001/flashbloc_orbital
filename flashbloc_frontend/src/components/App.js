@@ -9,6 +9,8 @@ import Dashboard from './data/Dashboard';
 // import Header from './layout/Header'
 import Home from './layout/home';
 import CreateChannel from './data/CreateChannel';
+import Channels from './data/Channels';
+import ChannelsDB from './data/ChannelsDB';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import styles from '../style';
 
@@ -59,6 +61,8 @@ class App extends Component {
                     <Route path="/login" element={<Login />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path="/createChannel" element={<CreateChannel/>} />
+                    <Route path="/channels" element={<Channels/>} />
+                    <Route path="/channelsDB" element={<ChannelsDB/>} />
                   </Routes>
               <div className={`bg-[#00040f] ${styles.paddingX} ${styles.flexCenter}`}>
                   <div className={`${styles.boxWidth}`}>

@@ -25,9 +25,23 @@ export class CreateChannelForm extends Component {
         tokenId:'', 
         description:'', 
         duration:'',
+        searchQuery: '',
       };
 
     onChange = (e) => this.setState({[e.target.name]: e.target.value});
+
+    handleSearch = (e) => {
+        const query = e.target.value;
+        //setSearchQuery(query);
+    
+        // Filter the data based on the search query
+        //const filtered = allData.filter(item => {
+          // Customize the condition based on your data structure and search requirements
+        //   return item.name.toLowerCase().includes(query.toLowerCase());
+        // });
+    
+        //setFilteredData(filtered);
+      };
 
     handleSubmit = async () => {
         //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
@@ -99,50 +113,100 @@ export class CreateChannelForm extends Component {
 
     // };
     
+    // const SearchBar = () => {
+    //     const [searchQuery, setSearchQuery] = useState('');
+    //     const [filteredData, setFilteredData] = useState([]);
+      
+    //     const allData = useSelector(state => state.data); // Access the data from the Redux store using useSelector
+        
+      
+    //     // Render the filtered data or perform any other actions based on the filteredData state
+      
+    //     return (
+    //       <div className="search-bar">
+    //         <input
+    //           type="text"
+    //           placeholder="Search..."
+    //           value={searchQuery}
+    //           onChange={handleSearch}
+    //         />
+    //         {/* Add additional search button or icon if needed */}
+    //       </div>
+    //     );
+    //   };
 
     render() {//modify search name field to filter for recipient account obj
     return (
         <Fragment>
             <div>
-                <h2>Create Channel</h2>
+                <br />
+                <h2 style={{ color: 'white', textAlign: 'center' }}>Create Channel</h2>
+                <br></br>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
+                    <div className="col-lg-4 mb-4" style={{ display: 'flex', alignItems: 'center' }}>
+                    <input type="text" className="form-control" id="validationCustom01" placeholder="Search" name="searchQuery" onChange={this.onChange} value={this.state.searchQuery} required style={{ marginRight: '10px' }} />
+                    <button className="btn btn-primary" type="submit" onClick={this.handleSearch}>Search</button>
+                    </div>
+                </div>
                 <br></br>
                 <form class="needs-validation" novalidate>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
                     <div class="col-lg-4 mb-4">
-                        <label for="validationCustom01">My amount</label>
+                        <label for="validationCustom01" style={{ color: 'white' }}>My Deposit</label>
                         <input type="number" className="form-control" id="validationCustom01" placeholder="Choose Amount" name="user_amount" onChange={this.onChange} required/>
-                        <div class="valid-feedback">
+                        <div class="valid-feedback" style={{ color: 'white' }}>
                             Looks good!
                         </div>
+                    </div>
                     </div>
 
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50px' }}>
                     <div class="col-lg-4 mb-4">
-                        <label for="validationCustom01">Other party expected amount</label>
+                        <label for="validationCustom01" style={{ color: 'white' }}>Other party expected Deposit</label>
                         <input type="number" className="form-control" id="validationCustom01" placeholder="Choose Amount" name="target_amount" onChange={this.onChange} required/>
                         <div class="valid-feedback">
-                            Looks good!
+                        Looks good!
                         </div>
                     </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
                     <div class="col-lg-4 mb-4">
-                        <label for="validationCustom01">Expiry date</label>
+                        <label for="validationCustom01" style={{ color: 'white' }}>Expiry date</label>
                         <input type="date" className="form-control" id="validationCustom01" placeholder="Enter date" name="expiration_date" onChange={this.onChange} required/>
-                        <div class="valid-feedback">
+                        <div class="valid-feedback" style={{ color: 'white' }}>
                             Looks good!
                         </div>
                     </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50px' }}>
                     <div class="form-group">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required/>
-                            <label class="form-check-label" for="invalidCheck">
+                            <label class="form-check-label" for="invalidCheck" style={{ color: 'white' }}>
                                 Agree to terms and conditions
                             </label>
-                            <div class="invalid-feedback">
+                            <div class="invalid-feedback" style={{ color: 'white' }}>
                                 You must agree before submitting.
                             </div>
                         </div>
                     </div>
+                    </div>
+                    <div style={{ textAlign: 'center', marginTop: '20px' }}>
                     <button class="btn btn-primary" type="submit" onClick={e => {e.preventDefault(); this.handleSubmit()}}>Submit form</button>
+                    </div>
                 </form>
-            </div>
+                </div>
+              <div style={{ textAlign: 'center', marginTop: '20px' }}>
+               <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleSubmitRecep() }}>Recipient init</button>
+             </div>
+             <div style={{ textAlign: 'center', marginTop: '20px' }}>
+               <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleDeclareClose() }}>Declare close</button>
+             </div>
+             <div style={{ textAlign: 'center', marginTop: '20px' }}>
+               <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleCloseNow() }}>Close now</button>
+           </div>
+
+            {/* </div>
             <br></br>
             <div>
                 <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleSubmitRecep()}}>Recipient init</button>
@@ -154,11 +218,73 @@ export class CreateChannelForm extends Component {
             <br></br>
             <div>
                 <button class="btn btn-secondary" type="submit" onClick={e => {e.preventDefault(); this.handleCloseNow()}}>Close now</button>
-            </div>
+            </div> */}
+            
         </Fragment>
     )
                     }                 
 }
+//         render() {
+//         return (
+//             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+//             <Fragment>
+//             <div>
+//                 <h2 style={{ color: 'white', textAlign: 'center' }}>Create Channel</h2>
+//             <div className="col-lg-4 mb-4">
+//               <input type="text" className="form-control" id="validationCustom01" placeholder="Search for recipient account" name="searchQuery" onChange={this.onChange} value={this.state.searchQuery} required />
+//               <button className="btn btn-primary" type="submit" onClick={this.handleSearch}>Search</button>
+//             </div>
+//             <form className="needs-validation" noValidate>
+//               <div className="col-lg-4 mb-4">
+//                 <label htmlFor="validationCustom01" style={{ color: 'white' }}>My Deposit</label>
+//                 <input type="number" className="form-control" id="validationCustom01" placeholder="Enter the amount you want to deposit" name="user_amount" onChange={this.onChange} required />
+//                 <div className="valid-feedback" style={{ color: 'white' }}>
+//                   Looks good!
+//                 </div>
+//               </div>
+//               <div className="col-lg-4 mb-4">
+//                 <label htmlFor="validationCustom01" style={{ color: 'white' }}>Other party expected Deposit</label>
+//                 <input type="number" className="form-control" id="validationCustom01" placeholder="Enter the expected amount from the other party" name="target_amount" onChange={this.onChange} required />
+//                 <div className="valid-feedback">
+//                   Looks good!
+//                 </div>
+//               </div>
+//               <div className="col-lg-4 mb-4">
+//                 <label htmlFor="validationCustom01" style={{ color: 'white' }}>Expiry date</label>
+//                 <input type="date" className="form-control" id="validationCustom01" placeholder="Enter the expiration date" name="expiration_date" onChange={this.onChange} required />
+//                 <div className="valid-feedback" style={{ color: 'white' }}>
+//                   Looks good!
+//                 </div>
+//               </div>
+//               <div className="form-group">
+//                 <div className="form-check">
+//                   <input className="form-check-input" type="checkbox" value="" id="invalidCheck" required />
+//                   <label className="form-check-label" htmlFor="invalidCheck" style={{ color: 'white' }}>
+//                     Agree to terms and conditions
+//                   </label>
+//                   <div className="invalid-feedback" style={{ color: 'white' }}>
+//                     You must agree before submitting.
+//                   </div>
+//                 </div>
+//               </div>
+//               <div style={{ textAlign: 'center' }}>
+//                 <button className="btn btn-primary" type="submit" onClick={e => { e.preventDefault(); this.handleSubmit() }}>Submit form</button>
+//               </div>
+//             </form>
+//           </div>
+//           <div style={{ textAlign: 'center', marginTop: '20px' }}>
+//             <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleSubmitRecep() }}>Recipient init</button>
+//           </div>
+//           <div style={{ textAlign: 'center', marginTop: '20px' }}>
+//             <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleDeclareClose() }}>Declare close</button>
+//           </div>
+//           <div style={{ textAlign: 'center', marginTop: '20px' }}>
+//             <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleCloseNow() }}>Close now</button>
+//           </div>
+//         </Fragment>
+//       </div>
+//     );
+//   }
 
 const mapStateToProps = state => {
     return {
