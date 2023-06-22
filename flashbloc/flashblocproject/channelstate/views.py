@@ -44,8 +44,11 @@ class channelStateView(GetUpdateViewSet):
         try:
             result = []
             curr_user = Account.objects.get(wallet_address=request.GET.get('walletAddress', ''))
-            owned_channels = models.Channel.objects.filter(~Q(status="CD"), Q(initator=curr_user) | Q(recipient=curr_user))
+            print("ONE", curr_user)
+            owned_channels = models.Channel.objects.filter(~Q(status="CD"), Q(initiator=curr_user) | Q(recipient=curr_user))
+            print("TWO", owned_channels)
             result.append(self.get_serializer(owned_channels, many=True).data)
+            print(result, "Three")
 
             return Response(result, status=status.HTTP_200_OK)
 
