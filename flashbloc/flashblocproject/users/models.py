@@ -49,7 +49,7 @@ class CustomAccountManager(BaseUserManager):
 class Account(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_('email address'), unique=True)
     user_name = models.CharField(max_length=150, unique=True)
-    wallet_address = models.CharField(max_length=150, unique=True)
+    wallet_address = models.CharField(max_length=150, unique=True, primary_key=True)
     start_date = models.DateTimeField(default=timezone.now)
     about = models.TextField(_(
         'about'), max_length=500, blank=True)

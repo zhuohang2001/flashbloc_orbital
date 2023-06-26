@@ -165,12 +165,13 @@ class channelStateView(GetUpdateViewSet):
             targetAddress = data.get('targetAddress')
             walletObj = Account.objects.get(wallet_address=walletAddress)
             targetObj = Account.objects.get(wallet_address=targetAddress)
-            initiatorBalance = data.get('initiatorBalance')
+            initiatorBalance = Decimal.from_float(float(data.get('initiatorBalance')))
+            recipientBalance = Decimal.from_float(float(data.get('recipientBalance')))
             targetEmail = data.get('targetEmail')
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
-            newChannel = models.Channel(initiator=walletObj, recipient=targetObj, status="RQ", total_balance=initiatorBalance, channel_address="")
+            newChannel = models.Channel(initiator=walletObj, recipient=targetObj, status="RQ", total_balance=initiatorBalance + recipientBalance, channel_address=walletAddress + targetAddress)
             newChannel.save()
-            newLedger = models.Ledger(channel=newChannel, latest_initiator_bal=initiatorBalance) #does this work? (should work)
+            newLedger = models.Ledger(channel=newChannel, latest_initiator_bal=initiatorBalance, latest_recipient_bal=recipientBalance) #does this work? (should work)
             newLedger.save()
             '''
             write handler to send email of channel details with recipient
@@ -245,11 +246,12 @@ class channelStateView(GetUpdateViewSet):
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
             currChannel = models.Channel.objects.get(Q(status="OP"), Q(recipient=currAccount), 
                                                      Q(initiator=targetAccount) | Q(channel_address=channelAddress))
-            currLedger = models.Ledger.objects.get(channel=currChannel)
-            currLedger.latest_recipient_bal = Decimal.from_float(data.get('recipientBalance'))
-            currLedger.save()
+            # currLedger = models.Ledger.objects.get(channel=currChannel)
+            assert currChannel.latest_recipient_bal == Decimal.from_float(data.get('recipientBalance')), "amount does not tally"
+            # currLedger.latest_recipient_bal = Decimal.from_float(data.get('recipientBalance'))
+            # currLedger.save()
             currChannel.status = "INIT"
-            currChannel.total_balance += Decimal.from_float(data.get('recipientBalance'))
+            # currChannel.total_balance += Decimal.from_float(data.get('recipientBalance'))
             currChannel.save()
 
             '''

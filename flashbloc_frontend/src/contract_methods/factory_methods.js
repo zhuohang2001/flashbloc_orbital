@@ -2,32 +2,37 @@ import "regenerator-runtime/runtime.js";
 import {ethers} from 'ethers'
 import getCookie from '../csrf.js'
 import { JsonRpcBatchProvider } from "@ethersproject/providers";
+import axiosInstance from "../components/axios.js";
 
 
 //functions --> create channel
 
 
 
-export const create_channel = async (factory, abi, signer, relevant_info, target_account, user_account) => {
+export const create_channel = async (factory, abi, signer, relevant_info, target_account, user_address) => {
     // console.log(factory)
-    const tx = await factory.startChannel(target_account, relevant_info.duration, relevant_info.target_amount, {value: relevant_info.user_amount})
-
-    // const tx = await factory.startChannel(target_account, 1000000000000000, 1000000000000000, {value: 1000000000000000})
-    const channel_address = update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account)
+    const initiator_bal = parseInt(relevant_info.ledger.latest_initiator_bal)
+    const expected_recipient_val = parseInt(relevant_info.ledger.latest_recipient_bal)
+    // const tx = await factory.startChannel(target_account, 9999999, expected_recipient_val, {value: initiator_bal})
+    const tx = await factory.startChannel("0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", 1000000000000000, 1000000000000000, {value: 1000000000000000})
+    const channel_address = update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_address)
     await tx.wait()
     return channel_address
 };
 
-function update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_account) {
+function update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_address) {
     console.log('running')
     return new Promise(function (resolve) {
         factory.on('ChannelStarted' , (contractAddress) => {//what is projectStarted
-            const data = {
-                "walletAddress": user_account.address, 
-                "targetAddress": target_account.address, 
-                "initiatorBalance": relevant_info.user_amount, 
-                "targetEmail": target_account.email
-            }
+            axiosInstance
+                .patch(`channelstate/createChannel/`, {
+                    currAddress: user_address, 
+                    targetAddress: target_account, 
+                    channelAddress: contractAddress
+                })
+                .then((res) => {
+                    console.log(res)
+                })
             // fetch('/newChannel/', {
             //     method: 'POST', 
             //     headers: {

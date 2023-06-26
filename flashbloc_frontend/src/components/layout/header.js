@@ -7,6 +7,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import { NavLink } from 'react-router-dom';
 import Link from '@material-ui/core/Link';
 import Button from '@material-ui/core/Button';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 
 import { useDispatch, useSelector } from 'react-redux'
 import { currentLoginAccount, resetLoginAccount, toggleLoginState } from '../../state_reducers/LoginAccountReducer';
@@ -28,6 +30,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function Header() {
+	const [anchorEl, setAnchorEl] = React.useState(null);
+
 	const loginAccount = useSelector((state) => state.loginAccount.value.current);
 	const dispatch = useDispatch();
 	useEffect(() => {
@@ -38,8 +42,13 @@ function Header() {
 		}));
 	  }, []);
 
+	const handleMenuClick = (event) => {
+	setAnchorEl(event.currentTarget);
+	};
 
-
+	const handleMenuClose = () => {
+	setAnchorEl(null);
+	};
 
 	const classes = useStyles();
 	return (
@@ -110,6 +119,30 @@ function Header() {
 					>
 						Logout
 					</Button>
+					<Button
+					aria-controls="dropdown-menu"
+					aria-haspopup="true"
+					onClick={handleMenuClick}
+					color="primary"
+					variant="outlined"
+					className={classes.link}
+					>
+					Menu
+					</Button>
+					<Menu
+						id="dropdown-menu"
+						anchorEl={anchorEl}
+						keepMounted
+						open={Boolean(anchorEl)}
+						onClose={handleMenuClose}
+						>
+						<MenuItem onClick={handleMenuClose} component={NavLink} to="/CreateChannel">
+							Create Channel
+						</MenuItem>
+						<MenuItem onClick={handleMenuClose} component={NavLink} to="/ChannelsDB">
+							Channels DB
+						</MenuItem>
+            		</Menu>
 					{loginAccount.walletAddress && <ConnectWeb3/>}
 				</Toolbar>
 			</AppBar>

@@ -11,30 +11,48 @@ import "regenerator-runtime/runtime.js";
 import { useDispatch } from 'react-redux';
 import { Form } from "react-bootstrap";
 import { addAccountChannel } from '../../state_reducers/AccountReducer.js';
+import { currentChannel } from '../../state_reducers/ChannelReducer.js';
 import axiosInstance from '../axios';
 import channel_abi from '../abi/contract_abi.json';
+import axios from 'axios';
+
 
 export class CreateChannelForm extends Component {
     csrf = getCookie('csrftoken')
     
     state = {
-        name:'', 
-        image:'', 
+        curr_username:'', 
+        target_email:'', 
         price:'', 
-        address:'', 
+        curr_address:'', 
         tokenId:'', 
         description:'', 
         duration:'',
-        searchQuery: '',
+        searchQuery: '', 
+        target_address: '', 
+        target_username: '', 
+        target_amount: 0, 
+        curr_amount: 0
       };
 
     onChange = (e) => this.setState({[e.target.name]: e.target.value});
 
     handleSearch = (e) => {
+        //will need to have dropdown to select
         axiosInstance.get(`user/searchedAccounts/?q=${this.state.searchQuery}`)
-            .then((response) => {
-                console.log(response)
+            .then((response) => response.data)
+            .then(data => {
+                this.state.target_username = data[0].user_name
+                this.state.target_address = data[0].wallet_address
+                this.state.target_email = data[0].email
+                this.props.currentChannel({
+                    "walletAddress": this.props.login_account.walletAddress, 
+                    "targetAddress": data[0].wallet_address, 
+                    "targetEmail": data[0].email
+                })
             })
+        console.log('curr state')
+        console.log(this.state)
         //setSearchQuery(query);
     
         // Filter the data based on the search query
@@ -46,19 +64,33 @@ export class CreateChannelForm extends Component {
         //setFilteredData(filtered);
       };
 
-    handleReqChannel = async () => {
-        //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
+    // handleReqChannel = async () => {
+    //     //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
 
-        const contracts_info = this.props.contracts
-        const target_account = this.props.curr_account
-        const user_account = this.props.user_account
-        const provider = new ethers.providers.Web3Provider(window.ethereum)
-        const signer = provider.getSigner()
-        // const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
-        const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
+    //     const contracts_info = this.props.contracts
+    //     const target_account = this.props.curr_account
+    //     const user_account = this.props.user_account
+    //     const provider = new ethers.providers.Web3Provider(window.ethereum)
+    //     const signer = provider.getSigner()
+    //     // const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
+    //     const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
 
-        console.log(channel_address)
-        this.props.addAccountChannel({"channel": channel_address})
+    //     console.log(channel_address)
+    //     this.props.addAccountChannel({"channel": channel_address})
+    // }
+    handleReqChannel = () => {
+        console.log(this.props.login_account.walletAddress)
+        console.log(this.state)
+        console.log('huh')
+        axiosInstance
+            .post(`channelstate/reqChannel/`, {
+                walletAddress: this.props.login_account.walletAddress, 
+                targetAddress: this.state.target_address, 
+                initiatorBalance: this.state.curr_amount, 
+                recipientBalance: this.state.target_amount, 
+                targetEmail: this.state.target_email
+            })
+            .then((request) => console.log(request))
     }
 
     handleSubmitRecep = async () => {
@@ -88,7 +120,7 @@ export class CreateChannelForm extends Component {
         <Fragment>
             <div>
                 <br />
-                <h2 style={{ color: 'white', textAlign: 'center' }}>Create Channel</h2>
+                <h2 style={{ color: 'white', textAlign: 'center' }}>Create Channel: {this.props.curr_channel.targetAddress}</h2>
                 <br></br>
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
                     <div className="col-lg-4 mb-4" style={{ display: 'flex', alignItems: 'center' }}>
@@ -101,7 +133,7 @@ export class CreateChannelForm extends Component {
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
                     <div class="col-lg-4 mb-4">
                         <label for="validationCustom01" style={{ color: 'white' }}>My Deposit</label>
-                        <input type="number" className="form-control" id="validationCustom01" placeholder="Choose Amount" name="user_amount" onChange={this.onChange} required/>
+                        <input type="number" className="form-control" id="validationCustom01" placeholder="Choose Amount" name="curr_amount" onChange={this.onChange} required/>
                         <div class="valid-feedback" style={{ color: 'white' }}>
                             Looks good!
                         </div>
@@ -144,15 +176,6 @@ export class CreateChannelForm extends Component {
                     </div>
                 </form>
                 </div>
-              <div style={{ textAlign: 'center', marginTop: '20px' }}>
-               <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleSubmitRecep() }}>Recipient init</button>
-             </div>
-             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-               <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleDeclareClose() }}>Declare close</button>
-             </div>
-             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-               <button className="btn btn-secondary" type="submit" onClick={e => { e.preventDefault(); this.handleCloseNow() }}>Close now</button>
-           </div>
             
         </Fragment>
     )
@@ -164,8 +187,10 @@ const mapStateToProps = state => {
     return {
         contracts: state.factory.value, 
         curr_account: state.accounts.value.current, 
-        user_account: state.accounts.value.userAccount
+        user_account: state.accounts.value.userAccount, 
+        login_account: state.loginAccount.value.current, 
+        curr_channel: state.channels.value.current
     }
 }
 
-export default connect(mapStateToProps, { addAccountChannel })(CreateChannelForm); //wrapper obj that contains the prop mappings and dispatchers
+export default connect(mapStateToProps, { addAccountChannel, currentChannel })(CreateChannelForm); //wrapper obj that contains the prop mappings and dispatchers

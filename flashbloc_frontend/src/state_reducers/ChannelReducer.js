@@ -4,13 +4,11 @@ import { notInitialized } from 'react-redux/es/utils/useSyncExternalStore';
 const initialStateValue = {
     channels: [], 
     current: { //fields to be updated
-        "initiator": "", 
-        "recipient": "", 
-        "status": "", 
-        "total_balance": null, 
-        "address": "", 
-        "identity": "", 
-        "spendable_amount": null
+        walletAddress: "", 
+        targetAddress: "", 
+        initiatorBalance: 0, 
+        recepientBalance: 0, 
+        targetEmail: ""
     }
 }
 
@@ -19,7 +17,34 @@ export const ChannelSlice = createSlice({
     initialState: {value: initialStateValue}, 
     reducers: {
         addChannel: (state, action) => {
-            state.value.proposals = [...state.value.proposals, action.payload] //appends new instances of obj to existing list of objs
+            state.value.channels = [...state.value.channels, action.payload] //appends new instances of obj to existing list of objs
+        }, 
+
+        editCurrChannelWithinChannels: (state, action) => {
+            const channels = state.value.channels;
+            const channelIdx = channels.findIndex(c => c.recipient === action.payload.recipient);
+        
+            const channelObj = channels[channelIdx];
+            console.log('OBJ')
+            console.log(channels)
+            console.log(action.payload.recipient)
+            var stat = null
+            if (channelObj.status == "RQ") {
+                stat = "APV"
+            } else if (channelObj.status == "APV") {
+                stat = "OP"
+            } else if (channelObj.status == "OP") {
+                stat = "INIT"
+            } else if (channelObj.status == "INIT") {
+                stat = "LK"
+            } else {
+                stat = "CD"
+            }
+            const newChannelObj = { ...channelObj, status: stat };
+        
+            const head = channels.slice(0, channelIdx - 1);
+            const tail = channels.slice(channelIdx + 1);
+            state.value.channels = [...head, newChannelObj, ...tail];
         }, 
 
         currentChannel: (state, action) => {
@@ -33,6 +58,6 @@ export const ChannelSlice = createSlice({
     }, 
 );
 
-export const { addChannel, currentChannel, resetCurrentChannel }  = ChannelSlice.actions;
+export const { addChannel, currentChannel, resetCurrentChannel, editCurrChannelWithinChannels }  = ChannelSlice.actions;
 
 export default ChannelSlice.reducer;

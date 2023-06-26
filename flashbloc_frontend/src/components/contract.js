@@ -45,7 +45,9 @@ export class Contract extends Component {
       }
 
     accountChangedHandler = (newAccount) => {
-      if(this.props.currLoginAccount.walletAddress.toLowerCase() == newAccount) {
+      // if(this.props.currLoginAccount.walletAddress.toLowerCase() == newAccount) {
+      if(this.props.currLoginAccount.walletAddress.toLowerCase() != "") {
+
         this.setState({['defaultAccount']: newAccount});
         this.updateEthers();
       } else {
