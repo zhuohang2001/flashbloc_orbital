@@ -20,14 +20,15 @@ export const ChannelSlice = createSlice({
             state.value.channels = [...state.value.channels, action.payload] //appends new instances of obj to existing list of objs
         }, 
 
+        assignChannels: (state, action) => {
+            state.value.channels = action.payload
+        }, 
+
         editCurrChannelWithinChannels: (state, action) => {
             const channels = state.value.channels;
             const channelIdx = channels.findIndex(c => c.recipient === action.payload.recipient);
         
             const channelObj = channels[channelIdx];
-            console.log('OBJ')
-            console.log(channels)
-            console.log(action.payload.recipient)
             var stat = null
             if (channelObj.status == "RQ") {
                 stat = "APV"
@@ -58,6 +59,6 @@ export const ChannelSlice = createSlice({
     }, 
 );
 
-export const { addChannel, currentChannel, resetCurrentChannel, editCurrChannelWithinChannels }  = ChannelSlice.actions;
+export const { addChannel, currentChannel, resetCurrentChannel, editCurrChannelWithinChannels, assignChannels }  = ChannelSlice.actions;
 
 export default ChannelSlice.reducer;

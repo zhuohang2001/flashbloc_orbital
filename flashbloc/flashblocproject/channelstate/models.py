@@ -15,6 +15,7 @@ class Channel(models.Model):
     ]
     initiator = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="initiator") #do i need related name?
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="recipient")
+    closed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,blank=True, on_delete=models.CASCADE, related_name="closed_by")
     status = models.CharField(null=True, blank=True, choices=STATUS_CHOICES, max_length=50)
     total_balance = models.DecimalField(decimal_places=1, blank=True, null=True, max_digits=19)
     channel_address = models.CharField(max_length=200, blank=True) #to be committed
