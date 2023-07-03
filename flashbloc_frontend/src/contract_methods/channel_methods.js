@@ -18,7 +18,8 @@ export const declare_close_channel = async (channel, sigs, item, nonce) => {
 
     // const tx = await channel.declare_close(sigs, 1, 1000000000000000, 1000000000000000, 0, 0)
     // await tx.wait() //how do i check if function is successful? do i need event
-    await channel.declare_close(sigs, nonce, item.ledger.locked_initiator_bal, item.ledger.locked_recipient_bal, )
+    await channel.declare_close(sigs, nonce, item.ledger.locked_initiator_bal, 
+        item.ledger.locked_recipient_bal, item.ledger.ptp_initiator_bal)
     console.log('declared_close')
 }
 
@@ -30,6 +31,8 @@ export const close_now_channel = async (channel) => {
 }
 
 
-export const challenge_close_channel = async (channel) => {
-    await channel.challenge_close(sigs, nonce, _, _, _, _)
+export const challenge_close_channel = async (channel, sigs, item, nonce) => {
+    await channel.challenge_close(sigs, nonce, item.ledger.locked_initiator_bal, 
+        item.ledger.locked_recipient_bal, item.ledger.ptp_initiator_bal)
+    console.log('challenged_close')
 }

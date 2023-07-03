@@ -6,7 +6,7 @@ import { ethers } from 'ethers'
 import { addChannel, currentChannel, editCurrChannelWithinChannels, assignChannels } from '../../state_reducers/ChannelReducer';
 import { toggleChannelComponent } from '../../state_reducers/ChannelComponentReducer';
 import { create_channel } from '../../contract_methods/factory_methods.js';
-import { recepient_initiate, declare_close_channel, close_now_channel } from '../../contract_methods/channel_methods.js';
+import { recepient_initiate, declare_close_channel, close_now_channel, challenge_close_channel } from '../../contract_methods/channel_methods.js';
 import channel_abi from '../abi/contract_abi.json';
 import { sign_latest_tx } from '../utils';
 
@@ -77,10 +77,10 @@ useEffect(() => handleFilter(), [channels])
   const handleChannelCreate = async (item) => {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
-    // const hashedMsg = ethers.utils.solidityKeccak256(["string", "uint", "string", "uint"], 
-    //   [item.channelAddress, 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
     const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
-      ["0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", 0, 1000000000000000 + ";" + 1000000000000000, 1])
+      [item.channelAddress, 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
+    // const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
+    //   ["0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", 0, 1000000000000000 + ";" + 1000000000000000, 1])
     console.log(hashedMsg)
     const signedMessage = await signer.signMessage(hashedMsg)
     console.log(signedMessage)
@@ -99,15 +99,17 @@ useEffect(() => handleFilter(), [channels])
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
     // const channelContract = new ethers.Contract(item.channel_address, channel_abi, signer)
-    const hashedMsg = ethers.utils.solidityKeccak256(["string", "uint", "string", "uint"], 
+    const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
       [item.channelAddress, 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
     const signedMessage = await signer.signMessage(hashedMsg)
 
     console.log("channel abi")
     console.log(contracts_info)
-    const channelContract = new ethers.Contract("0xED3AeE0d5f240889836A1964D426dFF408fD846d", channel_abi, signer)
+    // const channelContract = new ethers.Contract("0xED3AeE0d5f240889836A1964D426dFF408fD846d", channel_abi, signer)
+    const channelContract = new ethers.Contract(item.channel_address, channel_abi, signer)
+
     // recepient_initiate(channelContract, item.ledger.latest_recipient_bal)
-    await channelContract.recepient_init({value: 1000000000000000})
+    await channelContract.recepient_init({value: item.ledger.latest_recipient_bal})
       .then(
         axiosInstance
         .patch(`channelstate/initializeChannel/`, {
@@ -176,7 +178,15 @@ useEffect(() => handleFilter(), [channels])
       .then((data) => {
         if (data.result == "success") {
           if (signedStatus == "sign here") {
-            challenge_close_channel(channelContract, [data.initSig, data.recpSig], item)
+            challenge_close_channel(channelContract, [data.initSig, data.recpSig], item, currNonce)
+            .then(
+              axiosInstance
+              .patch(`channelstate/closeChannel/`, {
+                currAddress: loginAccount, 
+                channelAddress: item.channel_address
+              })
+              .then((res) => dispatch(editCurrChannelWithinChannels(item)))
+            )
           } else {
             close_now_channel(channelContract)
             .then(

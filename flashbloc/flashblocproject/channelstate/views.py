@@ -392,7 +392,7 @@ class channelStateView(GetUpdateViewSet):
             txSig = data.get("txSignature")
             nonce = data.get("nonce")
             channelAddress = data.get("channelAddress")
-            tar_channel = models.Channel.objects.get(channel_adress=channelAddress)
+            tar_channel = models.Channel.objects.get(channel_address=channelAddress)
             if tar_channel:
                 tar_ledger = tar_channel.ledger
                 if tar_channel.status != "CD":
