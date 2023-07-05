@@ -3,7 +3,8 @@ import axiosInstance from '../axios';
 import { useDispatch, useSelector } from 'react-redux'
 import { ethers } from 'ethers'
 
-import { addChannel, currentChannel, editCurrChannelWithinChannels, assignChannels } from '../../state_reducers/ChannelReducer';
+import { addChannel, currentChannel, editCurrChannelWithinChannels, assignChannels, 
+  editCurrChannelWithinChannelsChannelAddr } from '../../state_reducers/ChannelReducer';
 import { toggleChannelComponent } from '../../state_reducers/ChannelComponentReducer';
 import { create_channel } from '../../contract_methods/factory_methods.js';
 import { recepient_initiate, declare_close_channel, close_now_channel, challenge_close_channel } from '../../contract_methods/channel_methods.js';
@@ -75,24 +76,34 @@ useEffect(() => handleFilter(), [channels])
   }
 
   const handleChannelCreate = async (item) => {
+    console.log(item)
+    console.log("contract info abv")
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
+    const channel_address = await Promise.resolve(create_channel(contracts_info.factory, channel_abi, signer, item, item.recipient, loginAccount))
+    console.log(channel_address)
     const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
-      [item.channelAddress, 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
+    [channel_address, 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
     // const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
     //   ["0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", 0, 1000000000000000 + ";" + 1000000000000000, 1])
     console.log(hashedMsg)
     const signedMessage = await signer.signMessage(hashedMsg)
+
+  await axiosInstance.patch(`channelstate/createChannel/`, {
+    currAddress: loginAccount, 
+    targetAddress: item.recipient, 
+    channelAddress: channel_address, 
+    initiatorSignature: signedMessage
+  })
+  .then((request) => {
+    dispatch(editCurrChannelWithinChannels(item))
+    dispatch(editCurrChannelWithinChannelsChannelAddr({
+      "curr": item, 
+      "new_channel_addr": channel_address
+    }))
+  })
+    
     console.log(signedMessage)
-    const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, item, item.recipient, loginAccount))
-    console.log(channel_address)
-    axiosInstance.post(`channelstate/createChannel`, {
-      currAddress: loginAccount, 
-      targetAddress: item.recipient, 
-      channelAddress: item.channelAddress, 
-      initiatorSignature: signedMessage
-    })
-    .then((request) => console.log(request))
   }
 
   const handleChannelInit = async (item) => {
@@ -129,7 +140,9 @@ useEffect(() => handleFilter(), [channels])
   const handleDeclareClose = async (item) => {
     const provider = new ethers.providers.Web3Provider(window.ethereum) 
     const signer = provider.getSigner() 
+    console.log('signing stuff')
     const signArr = await sign_latest_tx(loginAccount, item.channel_address)
+    console.log(signArr)
     const signedMsg = signArr[0]
     const currNonce = signArr[2]
     var tarAcc = item.initiator
@@ -138,20 +151,23 @@ useEffect(() => handleFilter(), [channels])
     }
     
     const channelContract = new ethers.Contract(item.channel_address, channel_abi, signer)
-    axiosInstance.post(`channelstate/retrieve_sigs`, {
+    await axiosInstance.post(`channelstate/retrieve_sigs/`, {
       channelAddress: item.channel_address, 
       currSig: signedMsg
     }).then((res) => res.data)
+    .then((arr) => JSON.parse(arr))
     .then((data) => {
       if (data.result == "success") {
         declare_close_channel(channelContract, [data.initSig, data.recpSig], item)
         .then(
           axiosInstance
-          .patch(`channelstate/declareCloseChannel/`, {
+          .post(`channelstate/declareCloseChannel/`, {
             channelAddress: item.channel_address, 
             currAddress: loginAccount
           })
-          .then((res) => dispatch(editCurrChannelWithinChannels(item)))
+          .then((res) => {
+            dispatch(editCurrChannelWithinChannels(item))
+          })
         )
       } else {
         console.log("failed to declare close")
@@ -171,10 +187,11 @@ useEffect(() => handleFilter(), [channels])
     const signedStatus = signArr[1]
     const currNonce = signArr[2]
     const channelContract = new ethers.Contract(item.channel_address, channel_abi, signer)
-    axiosInstance.post(`channelstate/retrieve_sigs`, {
+    axiosInstance.post(`channelstate/retrieve_sigs/`, {
       channelAddress: item.channel_address,  
       currSig: signedMsg
     }).then((res) => res.data)
+      .then((arr) => JSON.parse(arr))
       .then((data) => {
         if (data.result == "success") {
           if (signedStatus == "sign here") {
@@ -185,7 +202,14 @@ useEffect(() => handleFilter(), [channels])
                 currAddress: loginAccount, 
                 channelAddress: item.channel_address
               })
-              .then((res) => dispatch(editCurrChannelWithinChannels(item)))
+              .then((res) => res.data)
+              .then((arr) => JSON.parse(arr))
+              .then((data) => {
+                if (data.success == true) {
+                  dispatch(editCurrChannelWithinChannels(item))
+                }
+              }
+            )
             )
           } else {
             close_now_channel(channelContract)
@@ -195,7 +219,14 @@ useEffect(() => handleFilter(), [channels])
                 currAddress: loginAccount, 
                 channelAddress: item.channel_address
               })
-              .then((res) => dispatch(editCurrChannelWithinChannels(item)))
+              .then((res) => res.data)
+              .then((arr) => JSON.parse(arr))
+              .then((data) => {
+                if (data.success == true) {
+                  dispatch(editCurrChannelWithinChannels(item))
+                }
+              }
+            )
             )
           }
         } 
@@ -265,7 +296,7 @@ useEffect(() => handleFilter(), [channels])
                 <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
                   {item.recipient} - {item.status}
                   <button className="btn btn-primary" onClick={() => handleChannelCreate(item)} style={{ marginLeft: '50px' }}>
-                    Init Channel
+                    Create Channel
                   </button>
                 </div>
               ))}

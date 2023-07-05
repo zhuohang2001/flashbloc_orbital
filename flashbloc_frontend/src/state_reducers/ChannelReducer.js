@@ -48,6 +48,21 @@ export const ChannelSlice = createSlice({
             state.value.channels = [...head, newChannelObj, ...tail];
         }, 
 
+        editCurrChannelWithinChannelsChannelAddr: (state, action) => {
+            const channels = state.value.channels;
+            const channelIdx = channels.findIndex(c => c.recipient === action.payload.curr.recipient);
+        
+            const channelObj = channels[channelIdx];
+            var newChannelObj = channelObj
+            var stat = null
+            if (channelObj.status == "APV") {
+                newChannelObj = { ...channelObj, channel_address: action.payload.new_channel_addr };
+            }
+            const head = channels.slice(0, channelIdx - 1);
+            const tail = channels.slice(channelIdx + 1);
+            state.value.channels = [...head, newChannelObj, ...tail];
+        }, 
+
         currentChannel: (state, action) => {
             state.value.current = Object.assign({}, state.value.current, action.payload) //appends extra info to an instance of obj, merges dict based on newest info
         }, 
@@ -59,6 +74,7 @@ export const ChannelSlice = createSlice({
     }, 
 );
 
-export const { addChannel, currentChannel, resetCurrentChannel, editCurrChannelWithinChannels, assignChannels }  = ChannelSlice.actions;
+export const { addChannel, currentChannel, resetCurrentChannel, editCurrChannelWithinChannels, assignChannels , 
+    editCurrChannelWithinChannelsChannelAddr}  = ChannelSlice.actions;
 
 export default ChannelSlice.reducer;

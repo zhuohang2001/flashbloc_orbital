@@ -217,12 +217,14 @@ class channelStateView(GetUpdateViewSet):
             initSignature = data.get('initiatorSignature')
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
             currChannel = models.Channel.objects.get(Q(initiator=currAccount), Q(recipient=targetAccount))
+            print('aft get channel')
             currChannel.status = "OP"
             currChannel.channel_address = channelAddress
             currLedger = currChannel.ledger
-            currPayment = TransactionLocal(status="SS", ledger=currLedger, amount=currChannel.total_balance, 
-                                           sender_sig=initSignature, receiver=channelAddress, local_nonce=1)
-            currLedger.latest_tx = currPayment
+            print('ledger:', currLedger, ' sig: ', initSignature, ' channeladdr: ', channelAddress)
+            currPayment = TransactionLocal(status="SS", ledger=currLedger, amount=currChannel.total_balance,
+                                           sender_sig=initSignature, receiver=targetAccount, local_nonce=1)
+            currLedger.latest_tx = currPayment  
             currPayment.save()
             currLedger.save()
             currChannel.save()
@@ -251,8 +253,8 @@ class channelStateView(GetUpdateViewSet):
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
             currChannel = models.Channel.objects.get(Q(status="OP"), Q(recipient=currAccount), 
                                                      Q(initiator=targetAccount) | Q(channel_address=channelAddress))
-            assert currChannel.latest_recipient_bal == Decimal.from_float(data.get('recipientBalance')), "amount does not tally"
             currLedger = currChannel.ledger
+            assert currLedger.latest_recipient_bal == Decimal.from_float(data.get('recipientBalance')), "amount does not tally"
             currTx = currLedger.latest_tx
             currTx.receiver_sig = recpSignature
             currTx.save()
@@ -289,7 +291,6 @@ class channelStateView(GetUpdateViewSet):
             
             res_dic = {"success": status_change}
             res_dict = json.dumps(res_dic)
-            
             return Response(res_dict, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -310,24 +311,29 @@ class channelStateView(GetUpdateViewSet):
             with transaction.atomic():
                 if targetChannel and targetChannel.status == "INIT":
                     targetLedger = targetChannel.ledger
-                    bal_initiator = Decimal.from_float(float(targetLedger.locked_initiator_bal)) + Decimal.from_float(float(targetLedger.ptp_initiator_bal)) #are these info needed?
-                    bal_recipient = Decimal.from_float(float(targetLedger.locked_recipient_bal)) + Decimal.from_float(float(targetLedger.ptp_recipient_bal))
+                    bal_initiator = float(targetLedger.locked_initiator_bal) + float(targetLedger.ptp_initiator_bal) #are these info needed?
+                    bal_recipient = float(targetLedger.locked_recipient_bal) + float(targetLedger.ptp_recipient_bal)
                     tx_receipt = targetLedger.locked_tx #is this the correct way to use related name?
-                    sig_initiator = tx_receipt.recipient_sig #assumes that this is the latest tx that can be signed by closer hence is recipient
-                    sig_recipient = tx_receipt.initiator_sig
+                    if targetChannel.initiator == tx_receipt.receiver:
+                        sig_initiator = tx_receipt.receiver_sig #assumes that this is the latest tx that can be signed by closer hence is recipient
+                        sig_recipient = tx_receipt.sender_sig
+                    
+                    else: 
+                        sig_recipient = tx_receipt.receiver_sig #assumes that this is the latest tx that can be signed by closer hence is recipient
+                        sig_initiator = tx_receipt.sender_sig
                     targetAccount = models.Account.objects.get(wallet_address=currAddress)
                     targetChannel.closed_by = targetAccount
                     targetChannel.status = "LK"
                     res_dic["sig_initiator"] = sig_initiator
                     res_dic["sig_recipient"] = sig_recipient
-                    targetChannel.save()
                     '''
                     send email to other party to inform and perform desired actions
                     '''
                     res_dic["bal_initiator"] = bal_initiator
                     res_dic["bal_recipient"] = bal_recipient
+                    targetChannel.save()
 
-                res_dict = json.dumps(res_dic)
+            res_dict = json.dumps(res_dic)
             return Response(res_dict, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -341,24 +347,28 @@ class channelStateView(GetUpdateViewSet):
             info_dict = {}
             tar_channel = models.Channel.objects.get(channel_address=channelAddress)
             print("TARGET CHANNEL: ", tar_channel)
+            init_bal = 0.0
+            recp_bal = 0.0
+            nonce = 0
             with transaction.atomic():
                 if tar_channel:
-                    channelAddress = tar_channel.channel_address
+                    # channelAddress = tar_channel.channel_address
+                    print("STARTING")
                     tar_ledger = tar_channel.ledger
+                    print("GOT LEDGER")
                     init_bal = float(tar_ledger.latest_initiator_bal)
-                    recp_bal = float(tar_ledger.latest_recp_bal)
+                    recp_bal = float(tar_ledger.latest_recipient_bal)
                     print("TARGET LEDGER: ", tar_ledger)
                     latest_tx = tar_ledger.latest_tx #check if this exists? (will it error if this does not exist?)
-                    # print("LATEST TX: ", latest_tx)
+                    print("LATEST TX: ", latest_tx)
+                    nonce = latest_tx.local_nonce
                     if latest_tx and latest_tx.receiver == currAddress:
                         # amount = latest_tx.amount
                         if tar_channel.initiator == str(currAddress):
                             init_bal += float(tar_channel.ptp_initiator_bal) + float(tar_channel.topup_initiator_bal)
                         else:
                             recp_bal += float(tar_channel.ptp_recipient_bal) + float(tar_channel.topup_recipient_bal)
-                        # tar_channel.state = "LK"
-                        # tar_channel.save() #why am i editing in a get request
-                        nonce = latest_tx.local_nonce
+                        
                         info_dict = {
                             "result": "sign here", 
                             "channelAddress": str(channelAddress), 
@@ -401,7 +411,7 @@ class channelStateView(GetUpdateViewSet):
                         if latest_tx.receiver == currAddress and latest_tx.local_nonce == int(nonce):
                             latest_tx.receiver_sig = str(txSig)
                             latest_tx.save()
-                            tar_ledger.lockedTx = latest_tx
+                            tar_ledger.locked_tx = latest_tx
                             if tar_channel.initiator == str(currAddress):
                                 tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal + tar_ledger.ptp_initiator_bal + tar_ledger.topup_initiator_bal
                                 tar_ledger.ptp_initiator_bal = float(0)
@@ -440,8 +450,11 @@ class channelStateView(GetUpdateViewSet):
             channelAddress = data.get('channelAddress')
             currSig = data.get('currSig')
             tar_channel = models.Channel.objects.get(channel_address=channelAddress)
+            print("TARGET CHANNEL: ", tar_channel)
             tar_ledger = tar_channel.ledger
             locked_tx = tar_ledger.locked_tx
+            print("LOCKED TX: ", locked_tx)
+            print("CURR SIG: ", currSig, currSig == locked_tx.sender_sig)
             if currSig == locked_tx.sender_sig or currSig == locked_tx.receiver_sig:
                 if locked_tx.receiver == tar_channel.initiator:
                     info_dict = {
@@ -457,7 +470,8 @@ class channelStateView(GetUpdateViewSet):
                         "recpSig": locked_tx.receiver_sig
                     }
 
-            info_dict = {"result": "no matching signature"}
+            else    :
+                info_dict = {"result": "no matching signature"}
 
             res = json.dumps(info_dict)
             return Response(res, status=status.HTTP_200_OK)
