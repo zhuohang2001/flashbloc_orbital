@@ -17,11 +17,8 @@ djangorestframework-simplejwt==5.2.2
 idna==3.4
 phonenumbers==8.13.11
 pip==23.0.1
-<<<<<<< HEAD
-=======
 pgcli==3.5.0
 python-dev-tools==2023.3.24
->>>>>>> 9ca5920176aeaef07a3c488194e9fc54fdbdf410
 postgres==4.0
 psycopg2==2.9.3
 psycopg2-pool==1.1

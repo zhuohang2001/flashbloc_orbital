@@ -13,6 +13,7 @@ from django.db import transaction
 from . import models
 from users.models import Account
 from channelstate.models import Ledger, Channel
+from .serializers import PtpGlobalSerializer, LocalTxSerializer, SimpleLocalTxSerializer, TopUpSerializer, PtpLocalSerializer, LedgerSerializer
 
 '''
 Ptp viewset (ptpglobal serializer)
@@ -139,7 +140,7 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
 class LocalPaymentsViewSet(GetUpdateViewSet):
     serializer_class = LocalTxSerializer
 
-    @action(detail=False, methods=['post'], url_path=r'txLocalExecute')
+    @action(detail=False, methods=['POST'])
     def executeTxLocal(self, request, *args, **kwargs):
         try:
             data = self.request.data
@@ -152,36 +153,38 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
             })
                 return Response(msg, status=status.HTTP_200_OK)
 
-            walletAddress = str(data.get('walletAddress'))
+            currAddress = str(data.get('currAddress'))
             targetAddress = str(data.get('targetAddress'))
             locked_filter = (~Q(status="LK")) #is this correct?
 
-            with transaction.atomic():
-                if Channel.objects.filter(locked_filter, initiator=walletAddress, recipient=targetAddress).exists():
-                    tar_channel = Channel.objects.filter(locked_filter, initiator=walletAddress, recipient=targetAddress).first()
-                    tar_ledger = tar_channel.ledger
-                    new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
-                    new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
-                        receiver=targetAddress, amount=amount, status="SS")
-                    sender_amt = amount - float(tar_ledger.ptp_initiator_bal) - float(tar_ledger.topup_initiator_bal)
-                    tar_ledger.ptp_initiator_balance = float(0)
-                    tar_ledger.topup_initiator_balance = float(0)
-                    tar_ledger.latest_initiator_balance -= sender_amt
-                    tar_ledger.latest_recipient_balance += amount
-                    tar_ledger.save()
-                    new_transaction.save()
+            curr_acc = Account.objects.get(wallet_address=currAddress)
+            tar_acc = Account.objects.get(wallet_address=targetAddress)
+            new_nonce = -1
 
-                elif Channel.objects.filter(locked_filter, recipient=walletAddress, initiator=targetAddress).exists():
-                    tar_channel = Channel.objects.filter(locked_filter, walletAddress, initiator=targetAddress).first()
+            with transaction.atomic():
+                if Channel.objects.filter(locked_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
+                    tar_channel = Channel.objects.filter(locked_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
                     tar_ledger = tar_channel.ledger
                     new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
-                    new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
+                    if tar_channel.initiator == curr_acc:
+                        new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
                         receiver=targetAddress, amount=amount, status="SS")
-                    sender_amt = amount - float(tar_ledger.ptp_recipient_bal) - float(tar_ledger.topup_recipient_bal)
-                    tar_ledger.ptp_recipient_balance = float(0)
-                    tar_ledger.topup_recipient_balance = float(0)
-                    tar_ledger.latest_recipient_balance -= sender_amt
-                    tar_ledger.latest_recipient_balance += amount
+                        sender_amt = amount - float(tar_ledger.ptp_initiator_bal) - float(tar_ledger.topup_initiator_bal)
+                        tar_ledger.ptp_initiator_balance = float(0)
+                        tar_ledger.topup_initiator_balance = float(0)
+                        tar_ledger.latest_initiator_balance -= sender_amt
+                        tar_ledger.latest_recipient_balance += amount
+                    
+                    else: 
+                        new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
+                            receiver=targetAddress, amount=amount, status="SS")
+                        sender_amt = amount - float(tar_ledger.ptp_recipient_bal) - float(tar_ledger.topup_recipient_bal)
+                        tar_ledger.ptp_recipient_balance = float(0)
+                        tar_ledger.topup_recipient_balance = float(0)
+                        tar_ledger.latest_recipient_balance -= sender_amt
+                        tar_ledger.latest_recipient_balance += amount
+                    
+
                     tar_ledger.save()
                     new_transaction.save()
 

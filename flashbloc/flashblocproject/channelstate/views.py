@@ -346,21 +346,15 @@ class channelStateView(GetUpdateViewSet):
             channelAddress = request.GET.get('channelAddress')
             info_dict = {}
             tar_channel = models.Channel.objects.get(channel_address=channelAddress)
-            print("TARGET CHANNEL: ", tar_channel)
             init_bal = 0.0
             recp_bal = 0.0
             nonce = 0
             with transaction.atomic():
                 if tar_channel:
-                    # channelAddress = tar_channel.channel_address
-                    print("STARTING")
                     tar_ledger = tar_channel.ledger
-                    print("GOT LEDGER")
                     init_bal = float(tar_ledger.latest_initiator_bal)
                     recp_bal = float(tar_ledger.latest_recipient_bal)
-                    print("TARGET LEDGER: ", tar_ledger)
                     latest_tx = tar_ledger.latest_tx #check if this exists? (will it error if this does not exist?)
-                    print("LATEST TX: ", latest_tx)
                     nonce = latest_tx.local_nonce
                     if latest_tx and latest_tx.receiver == currAddress:
                         # amount = latest_tx.amount
