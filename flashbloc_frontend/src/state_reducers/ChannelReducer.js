@@ -4,11 +4,19 @@ import { notInitialized } from 'react-redux/es/utils/useSyncExternalStore';
 const initialStateValue = {
     channels: [], 
     current: { //fields to be updated
-        walletAddress: "", 
-        targetAddress: "", 
-        initiatorBalance: 0, 
-        recepientBalance: 0, 
-        targetEmail: ""
+        initiator: "", 
+        recipient: "", 
+        status: "", 
+        total_balance: 0.0, 
+        channel_address: "", 
+        ledger: {
+            locked_initiator_bal: 0.0, 
+            locked_recipient_bal: 0.0, 
+            latest_initiator_bal: 0.0, 
+            latest_recipient_bal: 0.0, 
+            topup_initiator_bal: 0.0, 
+            topup_recipient_bal: 0.0
+        }
     }
 }
 
@@ -69,12 +77,52 @@ export const ChannelSlice = createSlice({
 
         resetCurrentChannel: (state, action) => {
             state.value.current = action.payload
+        }, 
+
+        editCurrentChannelPay: (state, action) => {
+            if (action.payload.identity == "initiator") {
+                state.value.current = { 
+                    ...state.value.current, 
+                    ledger: {
+                        ...state.value.current.ledger, 
+                        latest_recipient_bal: state.value.current.ledger.latest_recipient_bal + action.payload.amt, 
+                        latest_initiator_bal: state.value.current.ledger.latest_initiator_bal + state.value.current.ptp_initiator_bal + state.value.current.topup_initiator_bal - action.payload.amt, 
+                        locked_initiator_bal: state.value.current.ledger.latest_initiator_bal + state.value.current.ptp_initiator_bal + state.value.current.topup_initiator_bal - action.payload.amt
+                    }
+                };
+            } else if (action.payload.identity == "recipient") {
+                state.value.current = { 
+                    ...state.value.current, 
+                    ledger: {
+                        ...state.value.current.ledger, 
+                        latest_initiator_bal: state.value.current.ledger.latest_initiator_bal + action.payload.amt, 
+                        latest_recipient_bal: state.value.current.ledger.latest_recipient_bal + state.value.current.ptp_recipient_bal + state.value.current.topup_recipient_bal - action.payload.amt, 
+                        locked_recipient_bal: state.value.current.ledger.latest_recipient_bal + state.value.current.ptp_recipient_bal + state.value.current.topup_recipient_bal - action.payload.amt
+                    }
+                };
+            }
+        }, 
+
+        editCurrentChannelTopup: (state, action) => {
+            if (action.payload.identity == "initiator") {
+                state.value.current = { 
+                    ...state.value.current, 
+                    total_balance: state.value.current.total_balance + action.payload.amt, 
+                    ledger: {...state.value.current.ledger, topup_initiator_bal: state.value.current.ledger.topup_initiator_bal + action.payload.amt}
+                };
+            } else if (action.payload.identity == "recipient") {
+                state.value.current = { 
+                    ...state.value.current, 
+                    total_balance: state.value.current.total_balance + action.payload.amt, 
+                    ledger: {...state.value.current.ledger, topup_recipient_bal: state.value.current.ledger.topup_recipient_bal + action.payload.amt}
+                };
+            }
         }
     }
     }, 
 );
 
 export const { addChannel, currentChannel, resetCurrentChannel, editCurrChannelWithinChannels, assignChannels , 
-    editCurrChannelWithinChannelsChannelAddr}  = ChannelSlice.actions;
+    editCurrChannelWithinChannelsChannelAddr, editCurrentChannelPay, editCurrentChannelTopup }  = ChannelSlice.actions;
 
 export default ChannelSlice.reducer;

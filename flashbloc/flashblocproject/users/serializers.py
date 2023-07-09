@@ -3,6 +3,8 @@ from .models import Account
 # from users.models import Account
 from django.contrib.auth.hashers import make_password
 
+from channelstate.serializers import ChannelSerializer
+
 
 # class AccountSerializer(serializers.ModelSerializer):
 #     class Meta:

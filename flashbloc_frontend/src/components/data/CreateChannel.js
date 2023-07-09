@@ -81,7 +81,6 @@ export class CreateChannelForm extends Component {
     handleReqChannel = () => {
         console.log(this.props.login_account.walletAddress)
         console.log(this.state)
-        console.log('huh')
         axiosInstance
             .post(`channelstate/reqChannel/`, {
                 walletAddress: this.props.login_account.walletAddress, 

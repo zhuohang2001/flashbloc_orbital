@@ -9,11 +9,12 @@ import ChannelReducer from './state_reducers/ChannelReducer';
 import ChannelComponentReducer from './state_reducers/ChannelComponentReducer';
 import factoryReducer from './state_reducers/ContractReducer';
 import AccountReducer from './state_reducers/AccountReducer';
-import AccountComponentReducer from './state_reducers/AccountComponentReducer';
+import DetailComponentReducer from './state_reducers/DetailComponentReducer';
 import LoginAccountReducer from './state_reducers/LoginAccountReducer';
 
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import "bootstrap/dist/js/bootstrap.min.js";
+
 
 
 // const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -45,7 +46,7 @@ const store = configureStore({
         channels: ChannelReducer, 
         factory: factoryReducer,  
         channelComponent: ChannelComponentReducer, 
-        accountComponent: AccountComponentReducer, 
+        detailComponent: DetailComponentReducer, 
         accounts: AccountReducer, 
         contract: ContractReducer, 
         loginAccount: LoginAccountReducer, 

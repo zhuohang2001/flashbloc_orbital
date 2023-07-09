@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom/client';
 import Register from './auth/register';
 import Login from './auth/login';
 import Logout from './auth/logout';
+import { connect, useSelector } from 'react-redux';
+
 
 import Dashboard from './data/Dashboard';
 // import Header from './layout/Header'
@@ -11,6 +13,9 @@ import Home from './layout/home';
 import CreateChannel from './data/CreateChannel';
 import Channels from './data/Channels';
 import ChannelsDB from './data/ChannelsDB';
+import AccountsDB from './data/AccountsDB'
+// import AccountDetail from './data/AccountDetail'
+import ChannelDetail from './data/ChannelDetail'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import styles from '../style';
 
@@ -57,12 +62,14 @@ class App extends Component {
                   </div>
                   <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route path="/register" ele ment={<Register />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path="/createChannel" element={<CreateChannel/>} />
                     <Route path="/channels" element={<Channels/>} />
                     <Route path="/channelsDB" element={<ChannelsDB/>} />
+                    <Route path="/accountsDB" element={<AccountsDB/>} />
+                    <Route path="/channelDetail" element={<ChannelDetail/>} />
                   </Routes>
               <div className={`bg-[#00040f] ${styles.paddingX} ${styles.flexCenter}`}>
                   <div className={`${styles.boxWidth}`}>
@@ -76,4 +83,10 @@ class App extends Component {
   }
 }
 
-export default App;
+const mapStateToProps = state => {
+  return {
+    acc_detail_toggle: state.detailComponent.value
+  }
+}
+
+export default connect(mapStateToProps, {})(App);

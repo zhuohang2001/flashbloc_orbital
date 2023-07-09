@@ -1,5 +1,6 @@
 import json
 from django.http import HttpResponse
+from decimal import Decimal
 
 from django.shortcuts import render
 # Create your views here.
@@ -13,7 +14,7 @@ from django.db import transaction
 from . import models
 from users.models import Account
 from channelstate.models import Ledger, Channel
-from .serializers import PtpGlobalSerializer, LocalTxSerializer, SimpleLocalTxSerializer, TopUpSerializer, PtpLocalSerializer, LedgerSerializer
+from . import serializers
 
 '''
 Ptp viewset (ptpglobal serializer)
@@ -33,7 +34,7 @@ class GetUpdateViewSet(mixins.RetrieveModelMixin,
     pass
 
 class PtpPaymentsViewSet(GetUpdateViewSet):
-    serializer_class = serializers.ptpGlobalSerializer
+    serializer_class = serializers.PtpGlobalSerializer
 
     @action(detail=False, methods=['post'], url_path=r'ptpExecute')
     def executePtp(self, request, *args, **kwargs):
@@ -138,7 +139,8 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
 
 
 class LocalPaymentsViewSet(GetUpdateViewSet):
-    serializer_class = LocalTxSerializer
+    serializer_class = serializers.LocalTxSerializer
+    queryset = models.TransactionLocal.objects.all()
 
     @action(detail=False, methods=['POST'])
     def executeTxLocal(self, request, *args, **kwargs):
@@ -155,34 +157,36 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
 
             currAddress = str(data.get('currAddress'))
             targetAddress = str(data.get('targetAddress'))
-            locked_filter = (~Q(status="LK")) #is this correct?
+            init_filter = (Q(status="INIT")) #is this correct?
 
             curr_acc = Account.objects.get(wallet_address=currAddress)
             tar_acc = Account.objects.get(wallet_address=targetAddress)
             new_nonce = -1
 
-            with transaction.atomic():
-                if Channel.objects.filter(locked_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
-                    tar_channel = Channel.objects.filter(locked_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
+            with transaction.atomic(): #gota check if temporary diff ptp due to signature will cause contract to break
+                if Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
+                    tar_channel = Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
                     tar_ledger = tar_channel.ledger
                     new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
                     if tar_channel.initiator == curr_acc:
                         new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
-                        receiver=targetAddress, amount=amount, status="SS")
+                        receiver=tar_acc, amount=amount, status="SS")
                         sender_amt = amount - float(tar_ledger.ptp_initiator_bal) - float(tar_ledger.topup_initiator_bal)
-                        tar_ledger.ptp_initiator_balance = float(0)
-                        tar_ledger.topup_initiator_balance = float(0)
-                        tar_ledger.latest_initiator_balance -= sender_amt
-                        tar_ledger.latest_recipient_balance += amount
+                        tar_ledger.ptp_initiator_bal = Decimal.from_float(float(0))
+                        tar_ledger.topup_initiator_bal = Decimal.from_float(float(0))
+                        tar_ledger.latest_initiator_bal -= Decimal.from_float(sender_amt)
+                        tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal #gota test if correct amt
+                        tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
                     
                     else: 
                         new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
-                            receiver=targetAddress, amount=amount, status="SS")
+                            receiver=tar_acc, amount=amount, status="SS")
                         sender_amt = amount - float(tar_ledger.ptp_recipient_bal) - float(tar_ledger.topup_recipient_bal)
-                        tar_ledger.ptp_recipient_balance = float(0)
-                        tar_ledger.topup_recipient_balance = float(0)
-                        tar_ledger.latest_recipient_balance -= sender_amt
-                        tar_ledger.latest_recipient_balance += amount
+                        tar_ledger.ptp_recipient_bal = Decimal.from_float(float(0))
+                        tar_ledger.topup_recipient_bal = Decimal.from_float(float(0))
+                        tar_ledger.latest_recipient_bal -= Decimal.from_float(sender_amt)
+                        tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
+                        tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
                     
 
                     tar_ledger.save()
@@ -191,15 +195,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
             if models.TransactionLocal.objects.filter(local_nonce=new_nonce).exists():
                 tar_ledger.latest_tx = new_transaction #will this error out?
                 result = self.get_serializer(new_transaction, many=False).data #NEED MULTIPLE SERIALIZERS
-                if result.is_valid():
-                    return Response(result, status=status.HTTP_200_OK)       
-
-                else:
-                    #do i need json.dumps?
-                    msg = json.dumps({
-                        "error": "invalid serializer"
-                    })
-                    return Response(msg, status=status.HTTP_200_OK)
+                return Response(result, status=status.HTTP_200_OK)       
 
             msg = json.dumps({
                 "error": "tx instance not created"
@@ -213,36 +209,40 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
 class TopUpPaymentsViewSet(GetUpdateViewSet):
     serializer_class = serializers.TopUpSerializer
 
-    @action(detail=False, methods=['post'], url_path=r'topUpChannel')
+    @action(detail=False, methods=['POST'])
     def topUpChannel(self, request, *args, **kwargs):
         try:
-            locked_filter = (~Q(status="LK")) #is this correct?
+            init_filter = (Q(status="INIT")) #is this correct?
             data = self.request.data
-            walletAddress = data.get('walletAddress')
-            otherAddress = data.get('otherAddress')
+            currAddress = data.get('currAddress')
+            targetAddress = data.get('targetAddress')
+            curr_acc = models.Account.objects.get(wallet_address=currAddress)
+            tar_acc = models.Account.objects.get(wallet_address=targetAddress)
             amount = data.get('amount')
-            result = []
+            result = {}
             with transaction.atomic():
-                if Channel.objects.filter(locked_filter, initiator=str(walletAddress), recipient=str(otherAddress)).exists():
-                    tar_channel = models.Channel.objects.filter(initiator=str(walletAddress)).first()
-
-
-                elif Channel.objects.filter(locked_filter, recipient=str(walletAddress), initiator=str(otherAddress)).exists():
-                    tar_channel = models.Channel.objects.filter(initiator=str(walletAddress)).first()
+                if Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
+                    tar_channel = models.Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
                 
                 if tar_channel:
                     tar_ledger = tar_channel.ledger
-                    topup_nonce = models.Topup_receipt.objects.filter(sender=walletAddress).count()
-                    tar_ledger.topup_initiator_bal += float(amount)
-                    topup_receipt = models.Topup_receipt(sender=str(walletAddress), local_nonce=int(topup_nonce), ledger=tar_ledger)
+                    topup_nonce = models.Topup_receipt.objects.filter(ledger=tar_ledger).count()
+                    if tar_channel.initiator == curr_acc:
+                        tar_ledger.topup_initiator_bal += Decimal.from_float(float(amount))
+                    else:
+                        tar_ledger.topup_recipient_bal += Decimal.from_float(float(amount))
+                    topup_receipt = models.Topup_receipt(sender=curr_acc, local_nonce=int(topup_nonce), ledger=tar_ledger)
                     tar_ledger.save()
                     topup_receipt.save()
             
             if topup_receipt:
-                result.append(self.get_serializer(topup_receipt, many=False).data)
+                result = {
+                    "result": "success", 
+                    "topup_receipt": self.get_serializer(topup_receipt, many=False).data   
+                }
                 return Response(result, status=status.HTTP_200_OK)
             
-            msg = {"result": "topup fail"}     
+            msg = {"result": "fail"}     
             res = json.dumps(msg)
             return Response(result, status=status.HTTP_200_OK)
 

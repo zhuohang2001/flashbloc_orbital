@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../axios';
 import { useDispatch, useSelector } from 'react-redux'
 import { ethers } from 'ethers'
+import { useNavigate } from "react-router-dom";
 
 import { addChannel, currentChannel, editCurrChannelWithinChannels, assignChannels, 
   editCurrChannelWithinChannelsChannelAddr } from '../../state_reducers/ChannelReducer';
@@ -14,6 +15,7 @@ import { sign_latest_tx } from '../utils';
 
 
 const ContainerPage = () => {
+  const navigate = useNavigate()
   const contracts_info = useSelector((state) => state.factory.value)
   const loginAccount = useSelector((state) => state.loginAccount.value.current.walletAddress); //get from global state 
   const dispatch = useDispatch()
@@ -22,7 +24,6 @@ const ContainerPage = () => {
     axiosInstance.get(`http://localhost:8000/api/channelstate/get_userChannels/?walletAddress=${loginAccount}`)
       .then((response) => response.data)
       .then(data => dispatch(assignChannels(data[0])))
-      // .then(data => data[0].forEach(c => {dispatch(addChannel(c))}))
       .then(setFilteredData(channels))
   }, [loginAccount]);
 
@@ -135,7 +136,10 @@ useEffect(() => handleFilter(), [channels])
 
   }
  
-  const handleChannelTransfer = () => {}
+  const handleChannelTransfer = (curr) => {
+    dispatch(currentChannel(curr))
+    navigate('/channelDetail')
+  }
 
   const handleDeclareClose = async (item) => {
     const provider = new ethers.providers.Web3Provider(window.ethereum) 

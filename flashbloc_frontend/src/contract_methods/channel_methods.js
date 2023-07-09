@@ -2,6 +2,9 @@
 // 2.declare_close
 // 3.close_now
 
+import {ethers} from 'ethers'
+
+
 
 export const recepient_initiate = async (channel, val) => {
     const tx = await channel.recepient_init({value: val})
@@ -36,4 +39,21 @@ export const challenge_close_channel = async (channel, sigs, item, nonce) => {
     await channel.challenge_close(sigs, nonce, item.ledger.locked_initiator_bal, 
         item.ledger.locked_recipient_bal, item.ledger.ptp_initiator_bal, item.ledger.ptp_recipient_bal)
     console.log('challenged_close')
+    
+}
+
+export const topup_channel = async (channel, val) => {
+    const tx = await channel.top_up(1, { value: ethers.BigNumber.from(val) }) //rm first args after
+    const callRes = awaitFunctionSuccess(channel)
+    await tx.wait()
+    return callRes
+}
+
+
+function awaitFunctionSuccess(channel) {
+    return new Promise(function (resolve) {
+        channel.on('funcSuccess', (status) => {
+            resolve(status)
+        })
+    })
 }

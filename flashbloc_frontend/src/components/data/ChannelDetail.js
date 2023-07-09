@@ -1,196 +1,214 @@
 import React, { Fragment, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { currentChannel } from '../../state_reducers/ChannelReducer'
+import { currentChannel, editCurrentChannelPay, editCurrentChannelTopup } from '../../state_reducers/ChannelReducer'
 import { Contract, ethers } from 'ethers'
-import contract_abi from '../abi/factory_contract_abi.json'
+import contract_abi from '../abi/contract_abi.json'
+import { topup_channel } from '../../contract_methods/channel_methods'
+
+import getCookie from '../../csrf'
+import { MDBCol, MDBIcon, MDBFormInline, MDBBtn } from "mdbreact";
+import axiosInstance from '../axios'
 
 
-export default function ChannelDetails () {
+
+const ChannelDetail = () => {
     const dispatch = useDispatch()
-    const [signatureState, setSignature] = useState(null)
+    const loginAccount = useSelector((state) => state.loginAccount.value.current.walletAddress); //get from global state 
+    const [identityState, setIdentity] = useState("")
+    const [maxPayableState, setMaxPayable] = useState("")
+    const [transactionAmtState, setTransactionAmt] = useState("")
+    const [topupAmtState, setTopupAmt] = useState("")
+
     const curr_channel = useSelector((state) => state.channels.value.current)
     const curr_account = useSelector((state) => state.accounts.value.current)
     let tempProvider = new ethers.providers.Web3Provider(window.ethereum)
-    let tempSigner = tempProvider.getSigner()
-    const curr_channel_contract = new ethers.Contract(curr_channel.address, contract_abi, tempSigner)
+    let signer = tempProvider.getSigner()
+    const curr_channel_contract = new ethers.Contract(curr_channel.channel_address, contract_abi, signer)
+
     useEffect(() => {
-        if (curr_account.address == curr_channel.initiator) {
-            dispatch(currentChannel({
-                "identity": "initiator", 
-                "spendable_amount": curr_account.ledger.latest_initiator_bal
-            }))
-        } else if (curr_account.address == curr_channel.recipient) {
-            dispatch(currentChannel({
-                "identity": "recipient", 
-                "spendable_amount": curr_account.ledger.latest_recipient_bal
-            }))
+        if (loginAccount == curr_channel.initiator) {
+             setIdentity("initiator")
+             setMaxPayable(parseFloat(curr_channel.locked_initiator_bal) + parseFloat(curr_channel.ptp_initiator_bal) + parseFloat(curr_channel.topup_initiator_bal)) 
+        } else if (loginAccount == curr_channel.recipient) {
+             setIdentity("recipient")
+             setMaxPayable(parseFloat(curr_channel.locked_recipient_bal) + parseFloat(curr_channel.ptp_recipient_bal) + parseFloat(curr_channel.topup_recipient_bal)) 
         }
     })
 
-    const calculateTimeLeft = () => {
-        let difference = +new Date() - +new Date(curr_channel.status_expiry)
-        let timeLeft = {};
-
-        if (difference > 0) {
-          timeLeft = {
-            days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-            minutes: Math.floor((difference / 1000 / 60) % 60),
-            seconds: Math.floor((difference / 1000) % 60)
-          };
+    const handleClickPay = async () => {
+        var amtInit = 0.0
+        var amtRecp = 0.0
+        var receiver = null
+        if (transactionAmtState > maxPayableState) {
+            return
         }
-
-        return timeLeft
-    }
-
-
-
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft())
-    const [closeChannelState, setCloseChannelState] = useState(() => {
-        if (["LK", "INIT"].includes(curr_channel.status)) {
-            return 1
+        if (identityState == "initiator") {
+            amtInit = maxPayableState - transactionAmtState
+            amtRecp = curr_channel.locked_recipient_bal + transactionAmtState
+            receiver = curr_channel.recipient
+        } else if (identityState == "recipient") {
+            amtRecp = maxPayableState - transactionAmtState
+            amtInit = curr_channel.locked_initiator_bal + transactionAmtState
+            receiver = curr_channel.initiator
         } else {
-            return 0
+            return
         }
-    })
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setTimeLeft(calculateTimeLeft());
-        }, 1000);
-
-        return () => clearTimeout(timer)
-    })
-
-    const timerComponents = [];
-
-    Object.keys(timeLeft).forEach((interval) => {
-        if(!timeLeft[interval]) {
-            return;
-        }
-
-        timerComponents.push(
-            <span>
-                {timeLeft[interval]} {interval}{" "}
-            </span>
-        );
-    });
-
-    const clickChannelInitClose = async () => {
-
-        if(curr_channel.status == "LK") {
-
-        } else if (curr_channel.status == "INIT") {
-            function call_close_channel() {
-                return new Promise(function (resolve) {
-                    const targetAddr = () => {
-                        if(curr_channel.identity == "recipient") {
-                            return curr_channel.initiator
-                        } else {
-                            return curr_channel.recipient
-                        }
+        axiosInstance.get(`channelstate/getLatestTx/?currAddress=${loginAccount}&channelAddress=${receiver}`)
+        .then((response) => response.data)
+        .then((arr) => JSON.parse(arr))
+        .then(async (data) => {
+            const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
+            [data.channelAddress, 0, parseInt(amtInit) + ";" + parseInt(amtRecp), data.nonce + 1])
+            const signedMessage = await signer.signMessage(hashedMsg)
+            await axiosInstance.post(`channelstate/retrieve_sigs/`, {
+                channelAddress: curr_channel.channel_address, 
+                currSig: signedMessage
+              }).then((res) => res.data)
+              .then((arr) => JSON.parse(arr))
+              .then((data) => {
+                if (data.result == "success") {
+                    axiosInstance
+                    .post(`payments/local/executeTxLocal/`, {
+                      currAddress: loginAccount, 
+                      targetAddress: receiver, 
+                      sender_sig: signedMessage, 
+                      amount: transactionAmtState
+                    })
+                    .then((res) => {
+                      dispatch(editCurrentChannelPay({
+                        "identity": identityState, 
+                        "amt": transactionAmtState
+                      }))
                     }
-                    const data = fetch('<endpoint_name>', {
-                        method: 'POST', 
-                        headers: {
-                            'Accept': 'application/json', 
-                            'Content-Type': 'application/json', 
-                            'X-CSRFToken': getCookie('csrftoken')
-                        }, 
-                        body: {
-                            "walletAddress": curr_channel.address, 
-                            "targetAddress": targetAddr
-                        }
-                    }).then(response => response.json())
-                    .then(data => setSignature(data))
-                    resolve(data)
-                });
-            }
-
-            const data = await call_close_channel()
-            const close_data = await curr_channel_contract.declare_close([signatureState.sig_initiator, signatureState.sig_recipient], )
-        };
+                  )
+                } else {
+                  console.log("failed to declare close")
+                }
+              })
+        })
+        
+        //amt --> locked + topup + ptp
+        //amt -> sign -> transact -> update state
+        
     }
+
+    const handleClickTopup = async () => {
+        //amt -> call .topup function --> call api --> update state
+        var tar_addr = ""
+        if (identityState == "initiator") {
+            tar_addr = curr_channel.recipient
+        } else if (identityState == "recipient") {
+            tar_addr = curr_channel.initiator
+        } else {
+            return
+        }
+
+        topup_channel(curr_channel_contract, topupAmtState)
+            .then((res) => {
+                if (res) {
+                    axiosInstance
+                        .post(`payments/topUpChannel/`, {
+                            currAddress: loginAccount, 
+                            targetAddress: tar_addr, 
+                            amount: topupAmtState
+                        }).then((response) => JSON.parse(response.data))
+                            .then((data) => {
+                                if (data.result == "success") {
+                                    dispatch(editCurrentChannelTopup({
+                                        "identity": identityState, 
+                                        "amt": topupAmtState
+                                    }))
+                                    console.log("topup success")
+                                }
+                            })
+                }
+            })
+
+    }
+
 
     return (
         <Fragment>
             <h1>Channel Details</h1>
             <div className="container">
-                {curr_channel.map((c) => (
-                    <div className="row">
-                        <div className="col-lg-4 mb-4">
-                            <div className="card text-white bg-info mb-3" style="max-width: 18rem;">
+                    <div className="row" style={{ display: "flex", flexDirection: 'row' }}>
+                        <div className="col-lg-4">
+                            <div className="card textPrimary bg-info">
                                 <div className="card-header">Header</div>
                                     <div className="card-body">
                                         <h5 className="card-title">Account Info</h5>
                                         <ul>
-                                            <li key={c.address}>Address: {c.address} </li>
-                                            <li key={c.address}>Status: {c.status}</li>
-                                            <li>
-                                                {timerComponents.length ? timerComponents : <span>Time's up!</span>}
-                                            </li>
-                                        </ul>
-                                </div>
-                        </div>
-
-                        <div className="col-lg-4 mb-4">
-                            <div className="card text-white bg-dark mb-3" style="max-width: 18rem;">
-                                <div className="card-header">Header</div>
-                                    <div className="card-body">
-                                        <h5 className="card-title">Account Balances</h5>
-                                        <ul>
-                                            <li key={c.id}>{c.initiator} balance: {c.ledger.latest_initiator_bal}</li>
-                                            <li key={c.id}>{c.recipient} balance: {c.ledger.latest_recipient_bal}</li>
+                                            <li key={curr_channel.channel_address}>Address: {curr_channel.channel_address} </li>
+                                            <br></br>
+                                            <li key={curr_channel.address}>Status: {curr_channel.status}</li>
                                         </ul>
                                     </div>
                             </div>
                         </div>
 
-                        <div className="col-lg-4 mb-4">
-                            <div className="card text-white bg-dark mb-3" style="max-width: 18rem;">
+                        <div className="col-lg-4">
+                            <div className="card textPrimary bg-info">
+                                <div className="card-header">Header</div>
+                                    <div className="card-body">
+                                        <h5 className="card-title">Account Balances</h5>
+                                        <ul>
+                                            <li key={curr_channel.id}>{curr_channel.initiator} balance: {curr_channel.ledger.latest_initiator_bal}</li>
+                                            <br></br>
+                                            <li key={curr_channel.id}>{curr_channel.recipient} balance: {curr_channel.ledger.latest_recipient_bal}</li>
+                                        </ul>
+                                    </div>
+                            </div>
+                        </div>
+
+                        <div className="col-lg-4">
+                            <div className="card textPrimary bg-info">
                                 <div className="card-header">Header</div>
                                     <div className="card-body">
                                         <h5 className="card-title">Pending topup balance</h5>
                                         <ul>
-                                            <li key={c.id}>{c.initiator} top up balance: {c.ledger.topup_initiator_bal}</li>
-                                            <li key={c.id}>{c.recipient} top up balance: {c.ledger.topup_recipient_bal}</li>
+                                            <li key={curr_channel.id}>{curr_channel.initiator} top up balance: {curr_channel.ledger.topup_initiator_bal}</li>
+                                            <br></br>
+                                            <li key={curr_channel.id}>{curr_channel.recipient} top up balance: {curr_channel.ledger.topup_recipient_bal}</li> 
                                         </ul>
                                     </div>
                             </div>
                         </div>
                     </div>
-                </div>   
-                ))};
-                <div className="row">
-                    <MDBCol md="4">
-                        <MDBFormInline className="md-form mr-auto mb-4">
-                            <label>Pay through channel</label>
-                            <input className="form-control mr-sm-2" type="number" min="0" max={curr_channel.spendable_amount} placeholder="Amount" aria-label="Amount" name="AmtTransfer" onChange={() => setPathAmt}/>
-                            <MDBBtn outline color="warning" rounded size="sm" type="submit" classNameName="mr-auto" onClick={() => clickChannelPay()}>
-                            Pay
-                            </MDBBtn>
-                        </MDBFormInline>
-                    </MDBCol>
-                    <MDBCol md="4">
-                        <MDBFormInline className="md-form mr-auto mb-4">
-                            <label>Top up channel</label>
-                            <input className="form-control mr-sm-2" type="number" min="0" placeholder="Amount" aria-label="Amount" name="AmtTransfer" onChange={() => setPathAmt}/>
-                            <MDBBtn outline color="warning" rounded size="sm" type="submit" classNameName="mr-auto" onClick={() => clickChannelTopUp()}>
-                            Top Up
-                            </MDBBtn>
-                        </MDBFormInline>
-                    </MDBCol>
-                    <MDBCol md="4">
-                        <MDBFormInline className="md-form mr-auto mb-4">
-                            <label>Close Channel</label>
-                            <input className="form-control mr-sm-2" type="number" min="0" placeholder="Amount" aria-label="Amount" name="AmtTransfer" onChange={() => setPathAmt}/>
-                            {!closeChannelState && <MDBBtn outline color="warning" rounded size="sm" type="submit" classNameName="mr-auto" onClick={() => clickChannelInitClose()}>
-                            Close
-                            </MDBBtn>}
-                        </MDBFormInline>
-                    </MDBCol>
+                
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '50px', marginTop: '35px'}}>
+                        <input
+                        type="number"
+                        min="0"
+                        max={maxPayableState}
+                        className="form-control"
+                        style={{ width: '50%' }}
+                        placeholder="Search"
+                        value={transactionAmtState}
+                        onChange={(e) => setTransactionAmt(e.target.value)}
+                        />
+                        <button className="btn btn-primary" onClick={handleClickPay} style={{ marginLeft: '10px' }}>
+                        Pay
+                        </button>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '50px', marginTop: '35px'}}>
+                        <input
+                        type="number"
+                        min="0"
+                        className="form-control"
+                        style={{ width: '50%' }}
+                        placeholder="Search"
+                        value={topupAmtState}
+                        onChange={(e) => setTopupAmt(e.target.value)}
+                        />
+                        <button className="btn btn-primary" onClick={handleClickTopup} style={{ marginLeft: '10px' }}>
+                        Topup
+                        </button>
+                    </div>
                 </div>
             </div>
         </Fragment>
     );
 };
+
+export default ChannelDetail;

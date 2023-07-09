@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), 
     path('verification/', include('verify_email.urls')), 
     path('api/channelstate/', include('channelstate.urls')), 
+    path('api/payments/', include('payments.urls')), 
     # path('users/', include('users.urls')), 
     # path('payments/', include('payments.urls')), 
 ]

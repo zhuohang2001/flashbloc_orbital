@@ -72,9 +72,9 @@ function Header() {
 							component={NavLink}
 							to="/"
 							underline="none"
-							color="textWhite"
+							color="textPrimary"
 						>
-							<img src={FlashblocLogo} className="w-[50%] h-[50%] relative z-[5]" alt="" srcset="" />
+							<img src={FlashblocLogo} className="w-[50%] h-[50%] relative z-[5]" alt="" srcSet="" />
 						</Link>
 					</Typography>
 					<nav>
@@ -82,7 +82,7 @@ function Header() {
 							component={NavLink}
 							to="/"
 							underline="none"
-							color="textWhite"
+							color="textPrimary"
 						>
 							{loginAccount.walletAddress}
 						</Link>

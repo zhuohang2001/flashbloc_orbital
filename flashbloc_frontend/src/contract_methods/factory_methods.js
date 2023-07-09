@@ -24,18 +24,6 @@ function update_db_new_channel(factory, relevant_info, abi, signer, target_accou
     console.log('running')
     return new Promise(function (resolve) {
         factory.on('ChannelStarted' , (contractAddress) => {//what is projectStarted
-            // // fetch('/newChannel/', {
-            // //     method: 'POST', 
-            // //     headers: {
-            // //     'Accept': 'application/json', 
-            // //     'Content-Type': 'application/json', 
-            // //     'X-CSRFToken': getCookie('csrftoken')
-            // //     }, 
-            // //     body: data
-            // // })
-            // // .then(data => console.log(data)) //how do i check whether POST request is successful
-            // // console.log(channel_address)
-            // console.log('HI')
             resolve(contractAddress)
         })
     })

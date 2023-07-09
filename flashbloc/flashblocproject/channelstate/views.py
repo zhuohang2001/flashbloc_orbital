@@ -55,8 +55,7 @@ class channelStateView(GetUpdateViewSet):
     @action(detail=False, methods=["GET"])
     def get_targetChannel(self, request, *args, **kwargs):
         try:
-            result = []
-            print("WAT")
+            result = {}
             channelAddress = request.GET.get('q')
             target_channel = None
             if channelAddress:
