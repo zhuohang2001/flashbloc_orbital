@@ -29,6 +29,7 @@ export const sign_latest_tx = async (currAddress, channelAddress) => { //how to 
             } else {
                 const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
                 [data.channelAddress.toLowerCase(), 0, parseInt(data.initLkBal) + ";" + parseInt(data.recpLkBal), data.lockedNonce])
+                signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
                 // const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
                 // ["0x5007A5a681274e415043b71562e35D9073be38Ca".toLowerCase(), 0, parseInt(data.initLkBal) + ";" + parseInt(data.recpLkBal), data.lockedNonce])
                 console.log(data)

@@ -57,8 +57,9 @@ const ChannelDetail = () => {
         .then((arr) => JSON.parse(arr))
         .then(async (data) => {
             const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
-            [data.channelAddress.toLowerCase(), 0, parseInt(amtInit) + ";" + parseInt(amtRecp), data.nonce + 1])
+            [data.channelAddress.toLowerCase(), 0, parseInt(amtInit) + ";" + parseInt(amtRecp), ethers.BigNumber.from(parseInt(data.latestNonce) + 1)])
             const signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
+
             axiosInstance
             .post(`payments/local/executeTxLocal/`, {
             currAddress: loginAccount, 
@@ -95,11 +96,11 @@ const ChannelDetail = () => {
             .then((res) => {
                 if (res) {
                     axiosInstance
-                        .post(`payments/topUpChannel/`, {
+                        .post(`payments/topup/topUpChannel/`, {
                             currAddress: loginAccount, 
                             targetAddress: tar_addr, 
                             amount: topupAmtState
-                        }).then((response) => JSON.parse(response.data))
+                        }).then((response) => response.data)
                             .then((data) => {
                                 if (data.result == "success") {
                                     dispatch(editCurrentChannelTopup({
@@ -120,7 +121,7 @@ const ChannelDetail = () => {
             <h1>Channel Details</h1>
             <div className="container">
                     <div className="row" style={{ display: "flex", flexDirection: 'row' }}>
-                        <div className="col-lg-4">
+                        <div className="col-lg-6">
                             <div className="card textPrimary bg-info">
                                 <div className="card-header">Header</div>
                                     <div className="card-body">
@@ -134,33 +135,20 @@ const ChannelDetail = () => {
                             </div>
                         </div>
 
-                        <div className="col-lg-4">
+                        <div className="col-lg-6">
                             <div className="card textPrimary bg-info">
                                 <div className="card-header">Header</div>
                                     <div className="card-body">
                                         <h5 className="card-title">Account Balances</h5>
                                         <ul>
-                                            <li key={curr_channel.id}>{curr_channel.initiator} balance: {curr_channel.ledger.latest_initiator_bal}</li>
+                                            <li key={curr_channel.id}>{curr_channel.initiator} balance: {parseFloat(curr_channel.ledger.latest_initiator_bal) + parseFloat(curr_channel.ledger.ptp_initiator_bal) + parseFloat(curr_channel.ledger.topup_initiator_bal)}</li>
                                             <br></br>
-                                            <li key={curr_channel.id}>{curr_channel.recipient} balance: {curr_channel.ledger.latest_recipient_bal}</li>
+                                            <li key={curr_channel.id}>{curr_channel.recipient} balance: {parseFloat(curr_channel.ledger.latest_recipient_bal) + parseFloat(curr_channel.ledger.ptp_recipient_bal) + parseFloat(curr_channel.ledger.topup_recipient_bal)}</li>
                                         </ul>
                                     </div>
                             </div>
                         </div>
 
-                        <div className="col-lg-4">
-                            <div className="card textPrimary bg-info">
-                                <div className="card-header">Header</div>
-                                    <div className="card-body">
-                                        <h5 className="card-title">Pending topup balance</h5>
-                                        <ul>
-                                            <li key={curr_channel.id}>{curr_channel.initiator} top up balance: {curr_channel.ledger.topup_initiator_bal}</li>
-                                            <br></br>
-                                            <li key={curr_channel.id}>{curr_channel.recipient} top up balance: {curr_channel.ledger.topup_recipient_bal}</li> 
-                                        </ul>
-                                    </div>
-                            </div>
-                        </div>
                     </div>
                 
                 <div>

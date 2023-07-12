@@ -9,7 +9,9 @@ import { FcApproval } from "react-icons/fc";
 
 
 
-const contractAddress="0xFF77da1E6AA29eFB9C6d995A01B29e1AeeF70D25";
+// const contractAddress="0xFF77da1E6AA29eFB9C6d995A01B29e1AeeF70D25";
+const contractAddress="0x4136839d9B3d780Cc54795343cCcf936e99802D8";
+
 
 export class Contract extends Component {
   constructor (props) {

@@ -87,9 +87,9 @@ export const ChannelSlice = createSlice({
                     ...state.value.current, 
                     ledger: {
                         ...state.value.current.ledger, 
-                        latest_recipient_bal: state.value.current.ledger.latest_recipient_bal + action.payload.amt, 
-                        latest_initiator_bal: state.value.current.ledger.latest_initiator_bal + state.value.current.ptp_initiator_bal + state.value.current.topup_initiator_bal - action.payload.amt, 
-                        locked_initiator_bal: state.value.current.ledger.latest_initiator_bal + state.value.current.ptp_initiator_bal + state.value.current.topup_initiator_bal - action.payload.amt
+                        latest_recipient_bal: parseInt(state.value.current.ledger.latest_recipient_bal) + parseInt(action.payload.amt), 
+                        latest_initiator_bal: parseInt(state.value.current.ledger.latest_initiator_bal) + parseInt(state.value.current.ledger.ptp_initiator_bal) + parseFloat(state.value.current.ledger.topup_initiator_bal) - parseInt(action.payload.amt), 
+                        locked_initiator_bal: parseInt(state.value.current.ledger.latest_initiator_bal) + parseInt(state.value.current.ledger.ptp_initiator_bal) + parseFloat(state.value.current.ledger.topup_initiator_bal) - parseInt(action.payload.amt)
                     }
                 };
             } else if (action.payload.identity == "recipient") {
@@ -97,9 +97,9 @@ export const ChannelSlice = createSlice({
                     ...state.value.current, 
                     ledger: {
                         ...state.value.current.ledger, 
-                        latest_initiator_bal: state.value.current.ledger.latest_initiator_bal + action.payload.amt, 
-                        latest_recipient_bal: state.value.current.ledger.latest_recipient_bal + state.value.current.ptp_recipient_bal + state.value.current.topup_recipient_bal - action.payload.amt, 
-                        locked_recipient_bal: state.value.current.ledger.latest_recipient_bal + state.value.current.ptp_recipient_bal + state.value.current.topup_recipient_bal - action.payload.amt
+                        latest_initiator_bal: parseInt(state.value.current.ledger.latest_initiator_bal) + parseInt(action.payload.amt), 
+                        latest_recipient_bal: parseInt(state.value.current.ledger.latest_recipient_bal) + parseInt(state.value.current.ledger.ptp_recipient_bal) + parseInt(state.value.current.topup_recipient_bal) - parseInt(action.payload.amt), 
+                        locked_recipient_bal: parseInt(state.value.current.ledger.latest_recipient_bal) + parseInt(state.value.current.ledger.ptp_recipient_bal) + parseInt(state.value.current.topup_recipient_bal) - parseInt(action.payload.amt)
                     }
                 };
             }

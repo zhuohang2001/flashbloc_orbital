@@ -155,45 +155,54 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
             currAddress = str(data.get('currAddress'))
             targetAddress = str(data.get('targetAddress'))
             init_filter = (Q(status="INIT")) #is this correct?
-
             curr_acc = Account.objects.get(wallet_address=currAddress)
             tar_acc = Account.objects.get(wallet_address=targetAddress)
             new_nonce = -1
-
-            with transaction.atomic(): #gota check if temporary diff ptp due to signature will cause contract to break
-                if Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
-                    tar_channel = Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
-                    tar_ledger = tar_channel.ledger
-                    new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count() + 1
-                    if tar_channel.initiator == curr_acc:
-                        new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
+            print("1")
+            # with transaction.atomic(): #gota check if temporary diff ptp due to signature will cause contract to break
+            if Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
+                tar_channel = Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
+                print("2")
+                tar_ledger = tar_channel.ledger
+                new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count() + 1
+                print("3")
+                if tar_channel.initiator == curr_acc:
+                    new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
+                    receiver=tar_acc, amount=amount, status="SS")
+                    sender_amt = amount - float(tar_ledger.ptp_initiator_bal) - float(tar_ledger.topup_initiator_bal)
+                    tar_ledger.ptp_initiator_bal = Decimal.from_float(float(0))
+                    tar_ledger.topup_initiator_bal = Decimal.from_float(float(0))
+                    tar_ledger.latest_initiator_bal -= Decimal.from_float(sender_amt)
+                    # tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal #
+                    # gota test if correct amt
+                    tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
+                    print("4")
+                
+                else: 
+                    new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
                         receiver=tar_acc, amount=amount, status="SS")
-                        sender_amt = amount - float(tar_ledger.ptp_initiator_bal) - float(tar_ledger.topup_initiator_bal)
-                        tar_ledger.ptp_initiator_bal = Decimal.from_float(float(0))
-                        tar_ledger.topup_initiator_bal = Decimal.from_float(float(0))
-                        tar_ledger.latest_initiator_bal -= Decimal.from_float(sender_amt)
-                        # tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal #gota test if correct amt
-                        tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
-                    
-                    else: 
-                        new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
-                            receiver=tar_acc, amount=amount, status="SS")
-                        sender_amt = amount - float(tar_ledger.ptp_recipient_bal) - float(tar_ledger.topup_recipient_bal)
-                        tar_ledger.ptp_recipient_bal = Decimal.from_float(float(0))
-                        tar_ledger.topup_recipient_bal = Decimal.from_float(float(0))
-                        tar_ledger.latest_recipient_bal -= Decimal.from_float(sender_amt)
-                        # tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
-                        tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
+                    print("5")
+                    sender_amt = amount - float(tar_ledger.ptp_recipient_bal) - float(tar_ledger.topup_recipient_bal)
+                    tar_ledger.ptp_recipient_bal = Decimal.from_float(float(0))
+                    tar_ledger.topup_recipient_bal = Decimal.from_float(float(0))
+                    tar_ledger.latest_recipient_bal -= Decimal.from_float(sender_amt)
+                    # tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
+                    tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
+                    print("6")
 
-                    tar_ledger.latest_tx = new_transaction #gota db check this
-                    
-
-                    tar_ledger.save()
-                    new_transaction.save()
+                tar_ledger.latest_tx = new_transaction #gota db check this
+                
+                new_transaction.save()
+                tar_ledger.save()
+                print("7")
+                
+                print("8")
 
             if models.TransactionLocal.objects.filter(local_nonce=new_nonce).exists():
+                print("9")
                 tar_ledger.latest_tx = new_transaction #will this error out?
                 result = self.get_serializer(new_transaction, many=False).data #NEED MULTIPLE SERIALIZERS
+                print("10")
                 return Response(result, status=status.HTTP_200_OK)       
 
             msg = json.dumps({
@@ -220,19 +229,25 @@ class TopUpPaymentsViewSet(GetUpdateViewSet):
             amount = data.get('amount')
             result = {}
             with transaction.atomic():
+                print("1")
                 if Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
-                    tar_channel = models.Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
+                    tar_channel = Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
                 
                 if tar_channel:
+                    print("2")
                     tar_ledger = tar_channel.ledger
-                    topup_nonce = models.Topup_receipt.objects.filter(ledger=tar_ledger).count()
+                    topup_nonce = models.TopupReceipt.objects.filter(ledger=tar_ledger).count()
+                    print("3")
                     if tar_channel.initiator == curr_acc:
                         tar_ledger.topup_initiator_bal += Decimal.from_float(float(amount))
                     else:
                         tar_ledger.topup_recipient_bal += Decimal.from_float(float(amount))
-                    topup_receipt = models.Topup_receipt(sender=curr_acc, local_nonce=int(topup_nonce), ledger=tar_ledger)
+                    topup_receipt = models.TopupReceipt(sender=curr_acc, local_nonce=int(topup_nonce), ledger=tar_ledger)
+                    print("4")
                     tar_ledger.save()
+                    print("5")
                     topup_receipt.save()
+                    print("6")
             
             if topup_receipt:
                 result = {
