@@ -51,7 +51,7 @@ class PtpLocal(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
     local_nonce = models.IntegerField(null=True, blank=True)
     payment_id = models.ForeignKey(PtpGlobal, null=True, blank=True, on_delete=models.CASCADE)
-    ptp_bonus = models.DecimalField(decimal_places=17, null=True, blank=True, max_digits=19)
+    ptp_bonus = models.DecimalField(decimal_places=1, null=True, blank=True, max_digits=19)
 
 
 class TopupReceipt(models.Model):

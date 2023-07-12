@@ -1,4 +1,7 @@
 import React, { Component, Fragment, useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import { addProposal } from '../../state_reducers/ContractReducer';
 import { connect, useSelector } from 'react-redux';
 import { ethers } from 'ethers'
@@ -53,32 +56,23 @@ export class CreateChannelForm extends Component {
             })
         console.log('curr state')
         console.log(this.state)
-        //setSearchQuery(query);
-    
-        // Filter the data based on the search query
-        //const filtered = allData.filter(item => {
-          // Customize the condition based on your data structure and search requirements
-        //   return item.name.toLowerCase().includes(query.toLowerCase());
-        // });
-    
-        //setFilteredData(filtered);
+
       };
 
-    // handleReqChannel = async () => {
-    //     //call create channel mtd on factory --> await event and return when resolved promise -->show success tab --> replace form with channel tab
+    showToastSuccessMessage = () => {
+        toast.success('Success Notification !', {
+            position: toast.POSITION.TOP_RIGHT
+        });
+    };
 
-    //     const contracts_info = this.props.contracts
-    //     const target_account = this.props.curr_account
-    //     const user_account = this.props.user_account
-    //     const provider = new ethers.providers.Web3Provider(window.ethereum)
-    //     const signer = provider.getSigner()
-    //     // const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, "0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e"))
-    //     const channel_address = await Promise.resolve(create_channel(contracts_info.factory, contracts_info.channel_abi, signer, this.state, target_account, user_account))
+    showToastErrorMessage = () => {
+        toast.error('Error Notification !', {
+            position: toast.POSITION.TOP_CENTER
+        });
+    };
 
-    //     console.log(channel_address)
-    //     this.props.addAccountChannel({"channel": channel_address})
-    // }
     handleReqChannel = () => {
+        console.log(this.props)
         console.log(this.props.login_account.walletAddress)
         console.log(this.state)
         axiosInstance
@@ -89,7 +83,16 @@ export class CreateChannelForm extends Component {
                 recipientBalance: this.state.target_amount, 
                 targetEmail: this.state.target_email
             })
-            .then((request) => console.log(request))
+            .then((response) => response.data)
+            .then((data) => {
+                if (data.initiator != null && data.initiator != null){
+                    this.showToastSuccessMessage()
+                    console.log("create success")
+                } else {
+                    this.showToastErrorMessage()
+                    console.log("create fail")
+                }
+            })
     }
 
     handleSubmitRecep = async () => {
@@ -172,6 +175,7 @@ export class CreateChannelForm extends Component {
                     </div>
                     <div style={{ textAlign: 'center', marginTop: '20px' }}>
                     <button class="btn btn-primary" type="submit" onClick={e => {e.preventDefault(); this.handleReqChannel()}}>Submit form</button>
+                        <ToastContainer/>
                     </div>
                 </form>
                 </div>

@@ -24,6 +24,10 @@ contract SimplePaymentChannel {
     address payable public parent;
     uint expected_recipient_bal;
 
+    event funcSuccess(
+        bool succ
+    );
+
  
     constructor (address payable _initiator, address payable _recipient, uint _duration, uint _expected_recipient_bal) payable {
         // Parties[1].bal = msg.value;
@@ -58,7 +62,7 @@ contract SimplePaymentChannel {
     function declare_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, uint _ptp_init, uint _ptp_recp) public returns (bool) {
         //used when a party wants to close
         require(msg.sender == Parties[1].addr || msg.sender == Parties[2].addr);
-        require(_init_bal + _recp_bal <= Parties[1].bal + Parties[2].bal);
+        require(_init_bal + _recp_bal + _ptp_init + _ptp_recp <= Parties[1].bal + Parties[2].bal);
         require(_signature.length == 2);
         require((keccak256(abi.encodePacked(_signature[0])) != keccak256(abi.encodePacked(_signature[1]))));
         uint amt = 0;
@@ -83,7 +87,7 @@ contract SimplePaymentChannel {
     }
 
     function challenge_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, uint _ptp_init, uint _ptp_recp) public returns (bool) {
-        require(_init_bal + _recp_bal <= Parties[1].bal + Parties[2].bal);
+        require(_init_bal + _recp_bal + _ptp_init + _ptp_recp <= Parties[1].bal + Parties[2].bal);
         require(_signature.length == 2);
         require((keccak256(abi.encodePacked(_signature[0])) != keccak256(abi.encodePacked(_signature[1]))));
         uint amt = 0;
@@ -119,12 +123,15 @@ contract SimplePaymentChannel {
         }
     }
 
-    function top_up(uint _identity) public payable returns (bool) {
-        if (msg.sender == Parties[1].addr || msg.sender == Parties[2].addr) {
-            Parties[_identity].bal += msg.value;
-            return true;
+    function top_up() public payable {
+        if (msg.sender == Parties[1].addr) {
+            Parties[1].bal += msg.value;
+            emit funcSuccess(true);
+        } else if (msg.sender == Parties[2].addr) {
+            Parties[2].bal += msg.value;
+            emit funcSuccess(true);
         } else {
-            return false;
+            emit funcSuccess(false);
         }
     }
 

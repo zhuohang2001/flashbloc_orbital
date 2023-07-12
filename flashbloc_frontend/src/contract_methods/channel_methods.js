@@ -21,9 +21,13 @@ export const declare_close_channel = async (channel, sigs, item, nonce) => {
 
     // const tx = await channel.declare_close(sigs, 1, 1000000000000000, 1000000000000000, 0, 0)
     // await tx.wait() //how do i check if function is successful? do i need event
-
-    await channel.declare_close(sigs, nonce, item.ledger.locked_initiator_bal, 
-        item.ledger.locked_recipient_bal, item.ledger.ptp_initiator_bal, item.ledger.ptp_recipient_bal)
+    console.log("declaring close")
+    console.log(sigs)
+    console.log(item)
+    console.log(nonce)
+    const tx = await channel.declare_close(sigs, nonce, parseInt(item.ledger.locked_initiator_bal), 
+        parseInt(item.ledger.locked_recipient_bal), parseInt(item.ledger.ptp_initiator_bal), parseInt(item.ledger.ptp_recipient_bal))
+    tx.wait()
     console.log('declared_close')
 }
 

@@ -6,7 +6,7 @@ from .models import Ledger, Channel
 class SimpleLedgerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ledger
-        fields = ('locked_initiator_bal', 'locked_recipient_bal', 'latest_initiator_bal', 'latest_recipient_bal', 'topup_initiator_bal', 'topup_recipient_bal')
+        fields = ('locked_initiator_bal', 'locked_recipient_bal', 'latest_initiator_bal', 'ptp_initiator_bal', 'ptp_recipient_bal', 'latest_recipient_bal', 'topup_initiator_bal', 'topup_recipient_bal')
 
 class ChannelSerializer(serializers.ModelSerializer):
     #consider whether to change initiator and recepient fields to FK?

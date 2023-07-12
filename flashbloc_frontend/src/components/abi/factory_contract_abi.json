@@ -1,57 +1,145 @@
 [
 	{
-		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "contractAddress",
-				"type": "address"
+				"internalType": "bytes[2]",
+				"name": "_signature",
+				"type": "bytes[2]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_nonce",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_init_bal",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_recp_bal",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_ptp_init",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_ptp_recp",
+				"type": "uint256"
 			}
 		],
-		"name": "ChannelStarted",
-		"type": "event"
+		"name": "challenge_close",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "close",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "close_now",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "UserContracts",
-		"outputs": [
+				"internalType": "bytes[2]",
+				"name": "_signature",
+				"type": "bytes[2]"
+			},
 			{
 				"internalType": "uint256",
-				"name": "nil",
+				"name": "_nonce",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_init_bal",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_recp_bal",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_ptp_init",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_ptp_recp",
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
+		"name": "declare_close",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "_extension",
 				"type": "uint256"
 			}
 		],
-		"name": "flowList",
-		"outputs": [
-			{
-				"internalType": "contract SimplePaymentChannel",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
+		"name": "extend_time",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "recepient_init",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
 		"inputs": [
+			{
+				"internalType": "address payable",
+				"name": "_initiator",
+				"type": "address"
+			},
 			{
 				"internalType": "address payable",
 				"name": "_recipient",
@@ -68,38 +156,165 @@
 				"type": "uint256"
 			}
 		],
-		"name": "startChannel",
+		"stateMutability": "payable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "succ",
+				"type": "bool"
+			}
+		],
+		"name": "funcSuccess",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "timeout",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "top_up",
 		"outputs": [],
 		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
+		"stateMutability": "payable",
+		"type": "receive"
+	},
+	{
 		"inputs": [],
-		"name": "viewFlowContracts",
+		"name": "close_duration",
 		"outputs": [
 			{
-				"internalType": "contract SimplePaymentChannel[]",
+				"internalType": "uint256",
 				"name": "",
-				"type": "address[]"
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"inputs": [
+		"inputs": [],
+		"name": "close_time",
+		"outputs": [
 			{
-				"internalType": "address",
-				"name": "user",
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "expiration",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "initiator",
+		"outputs": [
+			{
+				"internalType": "address payable",
+				"name": "",
 				"type": "address"
 			}
 		],
-		"name": "viewusercontracts",
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "initiator_balance",
 		"outputs": [
 			{
-				"internalType": "address[]",
+				"internalType": "uint256",
 				"name": "",
-				"type": "address[]"
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nonce",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "parent",
+		"outputs": [
+			{
+				"internalType": "address payable",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "recipient",
+		"outputs": [
+			{
+				"internalType": "address payable",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "recipient_balance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "recipient_in",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",

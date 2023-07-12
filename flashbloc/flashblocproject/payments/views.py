@@ -36,7 +36,7 @@ class GetUpdateViewSet(mixins.RetrieveModelMixin,
 class PtpPaymentsViewSet(GetUpdateViewSet):
     serializer_class = serializers.PtpGlobalSerializer
 
-    @action(detail=False, methods=['post'], url_path=r'ptpExecute')
+    @action(detail=False, methods=['POST'])
     def executePtp(self, request, *args, **kwargs):
         try:
             data = self.request.data
@@ -45,67 +45,70 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
             amount_total = float(data.get('amount'))
             amount_deposited = amount_total * 95/100
             merchant_settlement = amount_total * 5/100
-            origin = data.get('origin')
-            destination = data.get('destination')
-            locked_filter = (~Q(status="LK")) #is this correct?
+            origin = Account.objects.get(wallet_address=data.get('origin'))
+            destination = Account.objects.get(wallet_address=data.get('destination'))
+            init_filter = Q(status="INIT") #is this correct?
 
-            ptp_global = models.PtpGlobal(status="PD", path_array=path_array, amount=str(amount_deposited), origin=origin, destination=destination)
+            ptp_global = models.PtpGlobal(status="PD", path_array=path_array, amount=Decimal.from_float(amount_deposited), origin=origin, destination=destination)
             ptp_global.save() #should this block be within transaction.atomic
             local_ptp_lst = []
             
-            with transaction.atomic():
-                per_intemediary_benefits = merchant_settlement / len(path_array)
-                arr_length = int(len(path_array))
-                for idx in range(1, arr_length, 1):
-                    tar_channel_r = Channel.objects.filter(locked_filter, initiator=str(path_array[idx-1]), recipient=str(path_array[idx])).first()
-                    tar_channel_i = Channel.objects.filter(locked_filter, recipient=str(path_array[idx-1]), initiator=str(path_array[idx])).first()
-                    if tar_channel_r:
-                        tar_channel = tar_channel_r
-                        tar_ledger = tar_channel.ledger #tx.atomic? referencing another obj tt is queried within block
-                        local_ptp = models.PtpLocal(ledger=tar_ledger, amount=str(amount_deposited), ptp_bonus=str(per_intemediary_benefits))
-                        local_ptp.save()
-                        local_ptp_lst.append(local_ptp_lst)
+            # with transaction.atomic():
+            per_intemediary_benefits = merchant_settlement / float(len(path_array))
+            arr_length = int(len(path_array))
+            for idx in range(1, arr_length, 1):
+                print(idx, arr_length)
+                tar_channel_r = Channel.objects.filter(init_filter, initiator=Account.objects.get(wallet_address=str(path_array[idx-1])), recipient=Account.objects.get(wallet_address=str(path_array[idx]))).first()
+                tar_channel_i = Channel.objects.filter(init_filter, recipient=Account.objects.get(wallet_address=str(path_array[idx-1])), initiator=Account.objects.get(wallet_address=str(path_array[idx]))).first()
+                if tar_channel_r:
+                    tar_channel = tar_channel_r
+                    tar_ledger = tar_channel.ledger #tx.atomic? referencing another obj tt is queried within block
+                    new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
+                    # local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), ptp_bonus=Decimal.from_float(per_intemediary_benefits), payment_id=ptp_global, \
+                    #                             local_nonce=int(new_nonce))
+                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), payment_id=ptp_global, \
+                                                local_nonce=int(new_nonce))
+                    local_ptp.save()
+                    local_ptp_lst.append(local_ptp_lst)
 
-                        if idx == 1:
-                            initiator_bal_delta = -float(amount_total) + float(per_intemediary_benefits)/2
-                            recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits)/2
-                        
-                        else:
-                            initiator_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits)/2
-                            recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits)/2
+                    if idx == 1:
+                        initiator_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
+                        recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    
+                    else:
+                        initiator_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                        recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
 
-                        tar_ledger.ptp_initiator_bal += initiator_bal_delta
-                        tar_ledger.ptp_recipient_bal += recipient_bal_delta
-                        tar_ledger.save()
-                        tar_channel.total_balance += float(per_intemediary_benefits)
-                        tar_channel.save()
-                        path_array.pop(idx-1)
-                        path_array.pop(idx)
+                    tar_ledger.ptp_initiator_bal += Decimal.from_float(initiator_bal_delta)
+                    tar_ledger.ptp_recipient_bal += Decimal.from_float(recipient_bal_delta)
+                    tar_ledger.save()
+                    tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
+                    tar_channel.save()
 
-                    elif tar_channel_i:
-                        tar_channel = tar_channel_i
-                        tar_ledger = tar_channel.ledger
-                        new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
-                        local_ptp = models.PtpLocal(ledger=tar_ledger, amount=str(amount_deposited), ptp_bonus=str(per_intemediary_benefits), payment_id=ptp_global, \
-                            local_nonce=int(new_nonce))
-                        local_ptp.save()
-                        local_ptp_lst.append(local_ptp_lst)
+                elif tar_channel_i:
+                    tar_channel = tar_channel_i
+                    tar_ledger = tar_channel.ledger
+                    new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
+                    # local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), ptp_bonus=Decimal.from_float(per_intemediary_benefits), payment_id=ptp_global, \
+                    #     local_nonce=int(new_nonce))
+                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), payment_id=ptp_global, \
+                        local_nonce=int(new_nonce))
+                    local_ptp.save()
+                    local_ptp_lst.append(local_ptp_lst)
 
-                        if idx == 1:
-                            recipient_bal_delta = -float(amount_total) + float(per_intemediary_benefits)/2
-                            initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits)/2
-                        
-                        else:
-                            recipient_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits)/2
-                            initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits)/2
+                    if idx == 1:
+                        recipient_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
+                        initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    
+                    else:
+                        recipient_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                        initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
 
-                        tar_ledger.ptp_initiator_bal += initiator_bal_delta
-                        tar_ledger.ptp_recipient_bal += recipient_bal_delta
-                        tar_ledger.save()
-                        tar_channel.total_balance += float(per_intemediary_benefits)
-                        tar_channel.save()                
-                        path_array.pop(idx-1)
-                        path_array.pop(idx)
+                    tar_ledger.ptp_initiator_bal += Decimal.from_float(initiator_bal_delta)
+                    tar_ledger.ptp_recipient_bal += Decimal.from_float(recipient_bal_delta)
+                    tar_ledger.save()
+                    tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
+                    tar_channel.save()                
 
 
 
@@ -123,15 +126,9 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
             ptp_global.save()
             result = self.get_serializer(ptp_global, many=False).data
 
-            if result.is_valid():
-                return Response(result, status=status.HTTP_200_OK) 
+            # if result.is_valid():
+            return Response(result, status=status.HTTP_200_OK) 
 
-            else:
-                #do i need json.dumps?
-                msg = json.dumps({
-                    "error": "invalid serializer"
-                })
-                return Response(msg, status=status.HTTP_200_OK) 
 
 
         except Exception as e:
@@ -167,7 +164,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                 if Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).exists():
                     tar_channel = Channel.objects.filter(init_filter, Q(initiator=curr_acc, recipient=tar_acc) | Q(initiator=tar_acc, recipient=curr_acc)).first()
                     tar_ledger = tar_channel.ledger
-                    new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
+                    new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count() + 1
                     if tar_channel.initiator == curr_acc:
                         new_transaction = models.TransactionLocal(ledger=tar_ledger, local_nonce=int(new_nonce), sender_sig=sender_sig, \
                         receiver=tar_acc, amount=amount, status="SS")
@@ -175,7 +172,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                         tar_ledger.ptp_initiator_bal = Decimal.from_float(float(0))
                         tar_ledger.topup_initiator_bal = Decimal.from_float(float(0))
                         tar_ledger.latest_initiator_bal -= Decimal.from_float(sender_amt)
-                        tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal #gota test if correct amt
+                        # tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal #gota test if correct amt
                         tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
                     
                     else: 
@@ -185,8 +182,10 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                         tar_ledger.ptp_recipient_bal = Decimal.from_float(float(0))
                         tar_ledger.topup_recipient_bal = Decimal.from_float(float(0))
                         tar_ledger.latest_recipient_bal -= Decimal.from_float(sender_amt)
-                        tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
+                        # tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
                         tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
+
+                    tar_ledger.latest_tx = new_transaction #gota db check this
                     
 
                     tar_ledger.save()

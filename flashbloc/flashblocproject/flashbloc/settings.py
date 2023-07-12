@@ -97,27 +97,40 @@ WSGI_APPLICATION = 'flashbloc.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': "postgres",
-            'USER': "postgres",
-            'PASSWORD': "Password1234",
-            'HOST': "localhost",
-            'PORT': "5432",
-        }
-    }
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#             'NAME': "postgres",
+#             'USER': "postgres",
+#             'PASSWORD': "Password1234",
+#             'HOST': "localhost",
+#             'PORT': "5432",
+#         }
+#     }
 
 # DATABASES = {
 #         'default': {
 #             'ENGINE': 'django.db.backends.postgresql',
 #             'NAME': "railway",
 #             'USER': "postgres",
-#             'PASSWORD': "YZxKGcX5Ig8c7lZ1Sdev",
-#             'HOST': "containers-us-west-97.railway.app",
-#             'PORT': "6047",
+#             'PASSWORD': "tKxZvTmpftGZaxLPdx0H",
+#             'HOST': "containers-us-west-206.railway.app",
+#             'PORT': "5827",
 #         }
 #     }
+
+DATABASES = {
+        'default': {
+            'DATABASE_URL': 'postgresql://postgres:tKxZvTmpftGZaxLPdx0H@containers-us-west-206.railway.app:5827/railway', 
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': "railway",
+            'USER': "postgres",
+            'PASSWORD': "tKxZvTmpftGZaxLPdx0H",
+            'HOST': "containers-us-west-206.railway.app",
+            'PORT': "5827",
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

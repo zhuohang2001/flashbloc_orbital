@@ -24,38 +24,22 @@ const ContainerPage = () => {
   const navigate = useNavigate()
 
   const channels = useSelector((state) => state.channels.value.channels); //get from global state
-  const [filteredData, setFilteredData] = useState(channels);
+  const [filteredData, setFilteredData] = useState([]);
 
   const [wordEntered, setWordEntered] = useState("");
   const [searchQuery, setSearchQuery] = useState('');
 
-  function clickedChannelExist(current) {
-    // dispatch(toggleDetailComponent({
-    //     listAccountComponent: false, 
-    //     detailAccountComponent: false, 
-    //     detailChannelComponent: true
-    // }))
-    dispatch(currentChannel(current))
-}
-
-function clickedChannelNotExist(current) {
-    // dispatch(toggleDetailComponent({
-    //     listAccountComponent: false, 
-    //     detailAccountComponent: true, 
-    //     detailChannelComponent: false
-    // }))
-    dispatch(currentAccount(current))
-}
-
   const handleClickPay = (item) => {
-    axiosInstance.get(`channelstate/get_targetChannel/?currAddress=${loginAccount}&q=${item.recipient}`)
+    axiosInstance.get(`channelstate/get_targetChannel/?currAddress=${loginAccount}&q=${item.wallet_address}`)
         .then((response) => {
-            if (response.status =="404 idk") {
-                dispatch(currentChannel(item))
-                // navigate("/accountDetail")
+          console.log(response)
+          const chan = response.data
+            if (chan.initiator == null && chan.recipient == null) {
+                dispatch(currentAccount(item))
+                navigate("/accountDetail")
+                console.log("channel not exists")
             } else {
-                const chan = JSON.parse(response.data)
-                dispatch(currentAccount(chan))
+                dispatch(currentChannel(chan))
                 navigate("/channelDetail")
                 console.log("channel exists")
             }
@@ -67,6 +51,7 @@ function clickedChannelNotExist(current) {
         .then((response) => response.data)
         // .then((arr) => JSON.parse(arr))
         .then((data) => {
+            console.log(data)
             setFilteredData(data)
         })
   }

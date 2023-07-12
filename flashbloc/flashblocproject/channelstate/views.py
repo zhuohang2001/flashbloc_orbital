@@ -76,28 +76,30 @@ class channelStateView(GetUpdateViewSet):
         except Exception as e:
             return Response(e.args, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=['get'], url_path=r"getPath/<str:walletAddress>/<str:targetAddress>/(?P<amount>\d+\.\d+)$")
+    @action(detail=False, methods=['GET'])
     def get_path(self, request, *args, **kwargs):
         try:
-            amount = float(self.kwargs.get('amount'))
+            amount = float(request.GET.get('amount'))
+            targetAddress = request.GET.get("targetAddress")
 
         except ValueError as e:
             return Response(e.args, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            print("START FUNCTION")
             class Node:
                 def __init__(self, curr, last):
-                    self.curr = None
-                    self.last = None
+                    self.curr = curr
+                    self.last = last
 
             visited = set()
             queue = []
             path = []
 
-            curr_user = Account.objects.get(walletAddress=self.kwargs.get('walletAddress')).first()
-            first_node = Node(curr_user, None)
-            visited.add(curr_user)
-            queue.append(curr_user)
+            curr_user = Account.objects.get(wallet_address=request.GET.get('walletAddress'))
+            prev_node = None
+            queue.append((curr_user, Node(curr=curr_user, last=None)))
+
             '''
             try to optimize this portion --> potential bottleneck
             
@@ -107,44 +109,53 @@ class channelStateView(GetUpdateViewSet):
             --> is looping through and filtering better or slicing a df that is only queried at the start
             '''
             while queue:
-                acc = queue.pop(0)
-                recipient_neighbours = models.Channel.objects.filter(Q(status="INIT"), Q(initiator=acc.walletAddress)) #is using df better?
-                initiator_neighbours = models.Channel.objects.filter(Q(status="INIT"), Q(recipient=acc.walletAddress))
+                acc_tup = queue.pop(0)
+                acc = acc_tup[0]
+                acc_node = acc_tup[1]
 
-                for r_n in recipient_neighbours:
-                    ledger = models.Ledger.objects.filter(Channel=r_n).first() #check whether channel can reference to ledger even if field not exist
-                    if amount < min(float(ledger.locked_initiator_bal)+float(ledger.ptp_initiator_bal), float(ledger.locked_initiator_bal)+float(ledger.ptp_initiator_bal)):
-                        tar_acc = Account.objects.filter(walletAddress=r_n.recipient).first() #can use get? or should i slice the df
-                        tar_node = Node(curr=tar_acc, last=acc)
-                        if tar_acc.walletAddress == self.kwargs.get("targetAddress"):
+                if acc in visited:
+                    continue
+                recipient_neighbours = models.Channel.objects.filter(Q(status="INIT"), Q(initiator=acc)) #is using df better?
+                initiator_neighbours = models.Channel.objects.filter(Q(status="INIT"), Q(recipient=acc))
+
+                print(recipient_neighbours, initiator_neighbours)
+
+                for idx, r_n in enumerate(recipient_neighbours):
+                    ledger = r_n.ledger
+                    if amount <= float(ledger.latest_initiator_bal)+float(ledger.ptp_initiator_bal)+float(ledger.topup_initiator_bal):
+                        tar_acc = Account.objects.get(wallet_address=r_n.recipient.wallet_address) #can use get? or should i slice the df
+                        tar_node = Node(curr=tar_acc, last=acc_node)
+                        if tar_acc.wallet_address == targetAddress:
                             curr = tar_node.curr
-                            path.insert(0, curr.walletAddress)
+                            path.insert(0, curr.wallet_address)
                             last = tar_node.last
-                            while last:
-                                path.insert(0, last.walletAddress)
+
+                            while last != None:
+                                path.insert(0, last.curr.wallet_address)
+                                last = last.last 
+
+                            json_response = json.dumps({"path" : path}) 
+                            return Response(json_response, status=status.HTTP_200_OK)
+                        queue.append((tar_acc, tar_node))
+                        
+                for idx, i_n in enumerate(initiator_neighbours):
+                    ledger = i_n.ledger
+                    if amount <= float(ledger.latest_recipient_bal)+float(ledger.ptp_recipient_bal)+float(ledger.topup_recipient_bal):
+                        tar_acc = Account.objects.get(wallet_address=i_n.initiator.wallet_address) #can a suitable indexer be found?
+                        tar_node = Node(curr=tar_acc, last=acc_node)
+                        if tar_acc.wallet_address == targetAddress:
+                            curr = tar_node.curr
+                            path.insert(0, curr.wallet_address)
+                            last = tar_node.last
+                            while last != None:
+                                path.insert(0, last.curr.wallet_address)
                                 last = last.last 
 
                             json_response = json.dumps({"path" : path}) 
                             return Response(json_response, status=status.HTTP_200_OK)
 
-                for i_n in initiator_neighbours:
-                    ledger = models.Ledger.objects.filter(Channel=i_n).first()
-                    if amount < min(float(ledger.locked_recipient_bal)-float(ledger.ptp_recipient_bal), float(ledger.locked_recipient_bal)-float(ledger.ptp_recpient_bal)):
-                        tar_acc = Account.objects.filter(walletAddress=i_n.initiator).first() #can a suitable indexer be found?
-                        tar_node = Node(curr=tar_acc, last=acc)
-                        if tar_acc.walletAddress == self.kwargs.get("targetAddress"):
-                            curr = tar_node.curr
-                            path.insert(0, curr.walletAddress)
-                            last = tar_node.last
-                            while last:
-                                path.insert(0, last.walletAddress)
-                                last = last.last 
-
-                            json_response = json.dumps({"path" : path}) 
-                            return Response(json_response, status=status.HTTP_200_OK)
-
-                        visited.add(tar_acc)
-                        queue.append(tar_acc)
+                        queue.append((tar_acc, tar_node))
+                visited.add(acc)
 
             json_response = json.dumps({"path" : path})
             return Response(json_response, status=status.HTTP_200_OK)
@@ -159,16 +170,21 @@ class channelStateView(GetUpdateViewSet):
             data = self.request.data
             walletAddress = data.get('walletAddress')
             targetAddress = data.get('targetAddress')
+            print("FIRST")
             walletObj = Account.objects.get(wallet_address=walletAddress)
             targetObj = Account.objects.get(wallet_address=targetAddress)
+            print("SECOND")
             initiatorBalance = Decimal.from_float(float(data.get('initiatorBalance')))
             recipientBalance = Decimal.from_float(float(data.get('recipientBalance')))
             targetEmail = data.get('targetEmail')
+            print("THIRD")
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
             newChannel = models.Channel(initiator=walletObj, recipient=targetObj, status="RQ", total_balance=initiatorBalance + recipientBalance, channel_address=walletAddress + targetAddress)
             newChannel.save()
+            print("FORTH")
             newLedger = models.Ledger(channel=newChannel, latest_initiator_bal=initiatorBalance, latest_recipient_bal=recipientBalance) #does this work? (should work)
             newLedger.save()
+            print("FIFTH")
             '''
             write handler to send email of channel details with recipient
             '''
@@ -223,6 +239,7 @@ class channelStateView(GetUpdateViewSet):
             print('ledger:', currLedger, ' sig: ', initSignature, ' channeladdr: ', channelAddress)
             currPayment = TransactionLocal(status="SS", ledger=currLedger, amount=currChannel.total_balance,
                                            sender_sig=initSignature, receiver=targetAccount, local_nonce=1)
+            currLedger.locked_initiator_bal = currLedger.latest_initiator_bal
             currLedger.latest_tx = currPayment  
             currPayment.save()
             currLedger.save()
@@ -255,8 +272,9 @@ class channelStateView(GetUpdateViewSet):
             currLedger = currChannel.ledger
             assert currLedger.latest_recipient_bal == Decimal.from_float(data.get('recipientBalance')), "amount does not tally"
             currTx = currLedger.latest_tx
+            currLedger.locked_recipient_bal = currLedger.latest_recipient_bal
             currTx.receiver_sig = recpSignature
-            currTx.save()
+            currTx.save()   
             currLedger.locked_tx = currTx
             currLedger.save()
             currChannel.status = "INIT"
@@ -347,14 +365,20 @@ class channelStateView(GetUpdateViewSet):
             tar_channel = models.Channel.objects.get(channel_address=channelAddress)
             init_bal = 0.0
             recp_bal = 0.0
-            nonce = 0
+            latest_nonce = -1
+            locked_nonce = -1
+            lk_init_bal = 0.0
+            lk_recp_bal = 0.0
             with transaction.atomic():
                 if tar_channel:
                     tar_ledger = tar_channel.ledger
                     init_bal = float(tar_ledger.latest_initiator_bal)
                     recp_bal = float(tar_ledger.latest_recipient_bal)
+                    lk_init_bal = float(tar_ledger.locked_initiator_bal)
+                    lk_recp_bal = float(tar_ledger.locked_recipient_bal)
                     latest_tx = tar_ledger.latest_tx #check if this exists? (will it error if this does not exist?)
-                    nonce = latest_tx.local_nonce
+                    latest_nonce = latest_tx.local_nonce
+                    locked_nonce = tar_ledger.locked_tx.local_nonce
                     if latest_tx and latest_tx.receiver == currAddress:
                         # amount = latest_tx.amount
                         if tar_channel.initiator == str(currAddress):
@@ -367,7 +391,10 @@ class channelStateView(GetUpdateViewSet):
                             "channelAddress": str(channelAddress), 
                             "initBal": int(init_bal), 
                             "recpBal": int(recp_bal), 
-                            "nonce": int(nonce)
+                            "initLkBal": int(lk_init_bal), 
+                            "recpLkBal": int(lk_recp_bal), 
+                            "latestNonce": int(latest_nonce), 
+                            "lockedNonce": int(locked_nonce)
                         }
 
             if info_dict == {}:
@@ -376,7 +403,10 @@ class channelStateView(GetUpdateViewSet):
                     "channelAddress": str(channelAddress), 
                     "initBal": int(init_bal), 
                     "recpBal": int(recp_bal), 
-                    "nonce": int(nonce)
+                    "initLkBal": int(lk_init_bal), 
+                    "recpLkBal": int(lk_recp_bal), 
+                    "latestNonce": int(latest_nonce), 
+                    "lockedNonce": int(locked_nonce)
                     }     
             
             res = json.dumps(info_dict)
@@ -409,14 +439,14 @@ class channelStateView(GetUpdateViewSet):
                                 tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal + tar_ledger.ptp_initiator_bal + tar_ledger.topup_initiator_bal
                                 tar_ledger.ptp_initiator_bal = float(0)
                                 tar_ledger.topup_initiator_bal = float(0)
-                                tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal
-                            
+                                
                             else:
                                 tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal + tar_ledger.ptp_recipient_bal + tar_ledger.topup_recipient_bal
                                 tar_ledger.ptp_recipient_bal = float(0)
                                 tar_ledger.topup_recipient_bal = float(0)
-                                tar_ledger.locked_initiator_bal = tar_ledger.locked_initiator_bal
 
+                            tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal
+                            tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal
                             tar_channel.status = "INIT" #why change to init?
                             tar_channel.save()
                             tar_ledger.save()

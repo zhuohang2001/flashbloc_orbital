@@ -15,7 +15,9 @@ const initialStateValue = {
             latest_initiator_bal: 0.0, 
             latest_recipient_bal: 0.0, 
             topup_initiator_bal: 0.0, 
-            topup_recipient_bal: 0.0
+            topup_recipient_bal: 0.0, 
+            ptp_initiator_bal: 0.0, 
+            ptp_recipient_bal: 0.0, 
         }
     }
 }

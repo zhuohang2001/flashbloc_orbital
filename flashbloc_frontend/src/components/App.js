@@ -16,6 +16,7 @@ import ChannelsDB from './data/ChannelsDB';
 import AccountsDB from './data/AccountsDB'
 // import AccountDetail from './data/AccountDetail'
 import ChannelDetail from './data/ChannelDetail'
+import AccountDetail from './data/AccountDetail'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import styles from '../style';
 
@@ -62,7 +63,7 @@ class App extends Component {
                   </div>
                   <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/register" ele ment={<Register />} />
+                    <Route path="/register" element={<Register />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path="/createChannel" element={<CreateChannel/>} />
@@ -70,6 +71,7 @@ class App extends Component {
                     <Route path="/channelsDB" element={<ChannelsDB/>} />
                     <Route path="/accountsDB" element={<AccountsDB/>} />
                     <Route path="/channelDetail" element={<ChannelDetail/>} />
+                    <Route path="/accountDetail" element={<AccountDetail/>} />
                   </Routes>
               <div className={`bg-[#00040f] ${styles.paddingX} ${styles.flexCenter}`}>
                   <div className={`${styles.boxWidth}`}>

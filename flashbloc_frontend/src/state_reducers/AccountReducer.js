@@ -6,9 +6,8 @@ const initialStateValue = {
     filteredAccounts: [], 
     current: { //fields to be updated
         email: '', 
-        address: '', 
-        created_at: '', 
-        channel: ''
+        user_name: '', 
+        wallet_address: ''
     }
 }
 

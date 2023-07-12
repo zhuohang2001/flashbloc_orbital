@@ -84,11 +84,11 @@ useEffect(() => handleFilter(), [channels])
     const channel_address = await Promise.resolve(create_channel(contracts_info.factory, channel_abi, signer, item, item.recipient, loginAccount))
     console.log(channel_address)
     const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
-    [channel_address, 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
+    [channel_address.toLowerCase(), 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
     // const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
     //   ["0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", 0, 1000000000000000 + ";" + 1000000000000000, 1])
     console.log(hashedMsg)
-    const signedMessage = await signer.signMessage(hashedMsg)
+    const signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
 
   await axiosInstance.patch(`channelstate/createChannel/`, {
     currAddress: loginAccount, 
@@ -112,8 +112,8 @@ useEffect(() => handleFilter(), [channels])
     const signer = provider.getSigner()
     // const channelContract = new ethers.Contract(item.channel_address, channel_abi, signer)
     const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
-      [item.channelAddress, 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
-    const signedMessage = await signer.signMessage(hashedMsg)
+      [item.channel_address.toLowerCase(), 0, parseInt(item.ledger.latest_initiator_bal) + ";" + parseInt(item.ledger.latest_recipient_bal), 1])
+    const signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
 
     console.log("channel abi")
     console.log(contracts_info)
@@ -121,7 +121,7 @@ useEffect(() => handleFilter(), [channels])
     const channelContract = new ethers.Contract(item.channel_address, channel_abi, signer)
 
     // recepient_initiate(channelContract, item.ledger.latest_recipient_bal)
-    await channelContract.recepient_init({value: item.ledger.latest_recipient_bal})
+    await channelContract.recepient_init({value: ethers.BigNumber.from(parseInt(item.ledger.latest_recipient_bal).toString())})
       .then(
         axiosInstance
         .patch(`channelstate/initializeChannel/`, {
@@ -129,7 +129,7 @@ useEffect(() => handleFilter(), [channels])
           targetAddress: item.initiator, 
           channelAddress: item.channel_address, 
           recipientSignature: signedMessage, 
-          recipientBalance: item.ledger.latest_recipient_bal
+          recipientBalance: parseFloat(item.ledger.latest_recipient_bal)
         })
         .then((res) => dispatch(editCurrChannelWithinChannels(item)))
       )
@@ -144,6 +144,9 @@ useEffect(() => handleFilter(), [channels])
   const handleDeclareClose = async (item) => {
     const provider = new ethers.providers.Web3Provider(window.ethereum) 
     const signer = provider.getSigner() 
+
+
+
     console.log('signing stuff')
     const signArr = await sign_latest_tx(loginAccount, item.channel_address)
     console.log(signArr)
@@ -153,7 +156,7 @@ useEffect(() => handleFilter(), [channels])
     if (item.initiator == loginAccount) {
       tarAcc = item.recipient
     }
-    
+
     const channelContract = new ethers.Contract(item.channel_address, channel_abi, signer)
     await axiosInstance.post(`channelstate/retrieve_sigs/`, {
       channelAddress: item.channel_address, 
@@ -162,7 +165,7 @@ useEffect(() => handleFilter(), [channels])
     .then((arr) => JSON.parse(arr))
     .then((data) => {
       if (data.result == "success") {
-        declare_close_channel(channelContract, [data.initSig, data.recpSig], item)
+        declare_close_channel(channelContract, [data.initSig, data.recpSig], item, currNonce)
         .then(
           axiosInstance
           .post(`channelstate/declareCloseChannel/`, {

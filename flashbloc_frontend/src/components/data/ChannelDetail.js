@@ -15,12 +15,11 @@ const ChannelDetail = () => {
     const dispatch = useDispatch()
     const loginAccount = useSelector((state) => state.loginAccount.value.current.walletAddress); //get from global state 
     const [identityState, setIdentity] = useState("")
-    const [maxPayableState, setMaxPayable] = useState("")
+    const [maxPayableState, setMaxPayable] = useState(0.0)
     const [transactionAmtState, setTransactionAmt] = useState("")
     const [topupAmtState, setTopupAmt] = useState("")
 
     const curr_channel = useSelector((state) => state.channels.value.current)
-    const curr_account = useSelector((state) => state.accounts.value.current)
     let tempProvider = new ethers.providers.Web3Provider(window.ethereum)
     let signer = tempProvider.getSigner()
     const curr_channel_contract = new ethers.Contract(curr_channel.channel_address, contract_abi, signer)
@@ -28,10 +27,10 @@ const ChannelDetail = () => {
     useEffect(() => {
         if (loginAccount == curr_channel.initiator) {
              setIdentity("initiator")
-             setMaxPayable(parseFloat(curr_channel.locked_initiator_bal) + parseFloat(curr_channel.ptp_initiator_bal) + parseFloat(curr_channel.topup_initiator_bal)) 
+             setMaxPayable(parseFloat(curr_channel.ledger.latest_initiator_bal) + parseFloat(curr_channel.ledger.ptp_initiator_bal) + parseFloat(curr_channel.ledger.topup_initiator_bal)) 
         } else if (loginAccount == curr_channel.recipient) {
              setIdentity("recipient")
-             setMaxPayable(parseFloat(curr_channel.locked_recipient_bal) + parseFloat(curr_channel.ptp_recipient_bal) + parseFloat(curr_channel.topup_recipient_bal)) 
+             setMaxPayable(parseFloat(curr_channel.ledger.latest_recipient_bal) + parseFloat(curr_channel.ledger.ptp_recipient_bal) + parseFloat(curr_channel.ledger.topup_recipient_bal)) 
         }
     })
 
@@ -44,47 +43,36 @@ const ChannelDetail = () => {
         }
         if (identityState == "initiator") {
             amtInit = maxPayableState - transactionAmtState
-            amtRecp = curr_channel.locked_recipient_bal + transactionAmtState
+            amtRecp = curr_channel.ledger.locked_recipient_bal + transactionAmtState
             receiver = curr_channel.recipient
         } else if (identityState == "recipient") {
             amtRecp = maxPayableState - transactionAmtState
-            amtInit = curr_channel.locked_initiator_bal + transactionAmtState
+            amtInit = curr_channel.ledger.locked_initiator_bal + transactionAmtState
             receiver = curr_channel.initiator
         } else {
             return
         }
-        axiosInstance.get(`channelstate/getLatestTx/?currAddress=${loginAccount}&channelAddress=${receiver}`)
+        axiosInstance.get(`channelstate/getLatestTx/?currAddress=${loginAccount}&channelAddress=${curr_channel.channel_address}`)
         .then((response) => response.data)
         .then((arr) => JSON.parse(arr))
         .then(async (data) => {
             const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
-            [data.channelAddress, 0, parseInt(amtInit) + ";" + parseInt(amtRecp), data.nonce + 1])
-            const signedMessage = await signer.signMessage(hashedMsg)
-            await axiosInstance.post(`channelstate/retrieve_sigs/`, {
-                channelAddress: curr_channel.channel_address, 
-                currSig: signedMessage
-              }).then((res) => res.data)
-              .then((arr) => JSON.parse(arr))
-              .then((data) => {
-                if (data.result == "success") {
-                    axiosInstance
-                    .post(`payments/local/executeTxLocal/`, {
-                      currAddress: loginAccount, 
-                      targetAddress: receiver, 
-                      sender_sig: signedMessage, 
-                      amount: transactionAmtState
-                    })
-                    .then((res) => {
-                      dispatch(editCurrentChannelPay({
-                        "identity": identityState, 
-                        "amt": transactionAmtState
-                      }))
-                    }
-                  )
-                } else {
-                  console.log("failed to declare close")
-                }
-              })
+            [data.channelAddress.toLowerCase(), 0, parseInt(amtInit) + ";" + parseInt(amtRecp), data.nonce + 1])
+            const signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
+            axiosInstance
+            .post(`payments/local/executeTxLocal/`, {
+            currAddress: loginAccount, 
+            targetAddress: receiver, 
+            sender_sig: signedMessage, 
+            amount: transactionAmtState
+            })
+            .then((res) => {
+            dispatch(editCurrentChannelPay({
+                "identity": identityState, 
+                "amt": transactionAmtState
+            }))
+            }
+        )
         })
         
         //amt --> locked + topup + ptp
