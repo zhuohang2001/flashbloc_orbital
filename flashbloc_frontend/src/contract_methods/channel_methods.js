@@ -47,7 +47,7 @@ export const challenge_close_channel = async (channel, sigs, item, nonce) => {
 }
 
 export const topup_channel = async (channel, val) => {
-    const tx = await channel.top_up(1, { value: ethers.BigNumber.from(val) }) //rm first args after
+    const tx = await channel.top_up({ value: ethers.BigNumber.from(parseInt(val).toString()) }) //rm first args after
     const callRes = awaitFunctionSuccess(channel)
     await tx.wait()
     return callRes
