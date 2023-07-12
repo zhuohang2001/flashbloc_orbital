@@ -121,13 +121,13 @@ WSGI_APPLICATION = 'flashbloc.wsgi.application'
 
 DATABASES = {
         'default': {
-            'DATABASE_URL': 'postgresql://postgres:tKxZvTmpftGZaxLPdx0H@containers-us-west-206.railway.app:5827/railway', 
+            'DATABASE_URL': 'postgresql://postgres:QDD4GqbOiawwnne00mMD@containers-us-west-182.railway.app:7385/railway', 
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': "railway",
             'USER': "postgres",
-            'PASSWORD': "tKxZvTmpftGZaxLPdx0H",
-            'HOST': "containers-us-west-206.railway.app",
-            'PORT': "5827",
+            'PASSWORD': "QDD4GqbOiawwnne00mMD",
+            'HOST': "containers-us-west-182.railway.app",
+            'PORT': "7385",
         }
     }
 

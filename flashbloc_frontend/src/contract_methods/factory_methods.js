@@ -14,7 +14,8 @@ export const create_channel = async (factory, abi, signer, relevant_info, target
     const initiator_bal = parseInt(relevant_info.ledger.latest_initiator_bal)
     const expected_recipient_val = parseInt(relevant_info.ledger.latest_recipient_bal)
     // const tx = await factory.startChannel(target_account, 9999999, expected_recipient_val, {value: initiator_bal})
-    const tx = await factory.startChannel("0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", 1000000000000000, 1000000000000000, {value: 1000000000000000})
+    // const tx = await factory.startChannel("0xed2bf05A1ea601eC2f3861F0B3f3379944FAdB12", 1000000000000000, 1000000000000000, {value: 1000000000000000})
+    const tx = await factory.startChannel(target_account, 9999999, parseInt(expected_recipient_val), {value: ethers.BigNumber.from(parseInt(initiator_bal).toString())})
     const channel_address = update_db_new_channel(factory, relevant_info, abi, signer, target_account, user_address)
     await tx.wait()
     return channel_address
