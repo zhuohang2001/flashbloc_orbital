@@ -8,10 +8,7 @@ import { FcApproval } from "react-icons/fc";
 
 
 
-
-// const contractAddress="0xFF77da1E6AA29eFB9C6d995A01B29e1AeeF70D25";
-const contractAddress="0x4136839d9B3d780Cc54795343cCcf936e99802D8";
-
+const contractAddress="0xFF77da1E6AA29eFB9C6d995A01B29e1AeeF70D25";
 
 export class Contract extends Component {
   constructor (props) {
@@ -32,7 +29,6 @@ export class Contract extends Component {
   }
 
 
-
     connectWalletHandler = () => {
         if (window.ethereum) {
           console.log('uhh')
@@ -47,9 +43,7 @@ export class Contract extends Component {
       }
 
     accountChangedHandler = (newAccount) => {
-      // if(this.props.currLoginAccount.walletAddress.toLowerCase() == newAccount) {
-      if(this.props.currLoginAccount.walletAddress.toLowerCase() != "") {
-
+      if(this.props.currLoginAccount.walletAddress.toLowerCase() == newAccount) {
         this.setState({['defaultAccount']: newAccount});
         this.updateEthers();
       } else {
@@ -80,8 +74,13 @@ export class Contract extends Component {
       // check what cannot be saved under state, for now seems like (contract, abi, factory) ; what form is provider in? is it an obj or a str?; can objs be saved?
       render() {
         return (
-            <div>
-              {this.state.factory && <h2>Wallet connected!<FcApproval/></h2>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              {this.state.factory && (<h2 style={{ marginLeft: '10px', position: 'relative',
+    top: '-33px', }}>
+                Wallet connected!
+                <FcApproval/>
+              </h2>
+              )}
             </div>
           );
       }
