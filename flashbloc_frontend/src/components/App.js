@@ -17,6 +17,11 @@ import AccountsDB from './data/AccountsDB'
 // import AccountDetail from './data/AccountDetail'
 import ChannelDetail from './data/ChannelDetail'
 import AccountDetail from './data/AccountDetail'
+import PaymentPage from './data/PaymentPage'
+import PaymentFail from './data/PaymentFail'
+import PaymentIndirect from './data/PaymentIndirect'
+import PaymentConfirm from './data/PaymentConfirm'
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import styles from '../style';
 
@@ -72,6 +77,10 @@ class App extends Component {
                     <Route path="/accountsDB" element={<AccountsDB/>} />
                     <Route path="/channelDetail" element={<ChannelDetail/>} />
                     <Route path="/accountDetail" element={<AccountDetail/>} />
+                    <Route path="/paymentPage" element={<PaymentPage/>} />
+                    <Route path="/paymentFail" element={<PaymentFail/>} />
+                    <Route path="/paymentIndirect" element={<PaymentIndirect/>} />
+                    <Route path="/paymentConfirm" element={<PaymentConfirm/>} />
                   </Routes>
               <div className={`bg-[#00040f] ${styles.paddingX} ${styles.flexCenter}`}>
                   <div className={`${styles.boxWidth}`}>
