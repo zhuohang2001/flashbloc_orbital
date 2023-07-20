@@ -61,14 +61,14 @@
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "int256",
 				"name": "_ptp_init",
-				"type": "uint256"
+				"type": "int256"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "int256",
 				"name": "_ptp_recp",
-				"type": "uint256"
+				"type": "int256"
 			}
 		],
 		"name": "challenge_close",
@@ -157,14 +157,14 @@
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "int256",
 				"name": "_ptp_init",
-				"type": "uint256"
+				"type": "int256"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "int256",
 				"name": "_ptp_recp",
-				"type": "uint256"
+				"type": "int256"
 			}
 		],
 		"name": "declare_close",

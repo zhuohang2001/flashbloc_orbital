@@ -59,10 +59,10 @@ contract SimplePaymentChannel {
         require(sent_init, "Failed to send Ether");
     }
 
-    function declare_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, uint _ptp_init, uint _ptp_recp) public returns (bool) {
+    function declare_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, int _ptp_init, int _ptp_recp) public returns (bool) {
         //used when a party wants to close
         require(msg.sender == Parties[1].addr || msg.sender == Parties[2].addr);
-        require(_init_bal + _recp_bal + _ptp_init + _ptp_recp <= Parties[1].bal + Parties[2].bal);
+        require(_init_bal + _recp_bal <= Parties[1].bal + Parties[2].bal);
         require(_signature.length == 2);
         require((keccak256(abi.encodePacked(_signature[0])) != keccak256(abi.encodePacked(_signature[1]))));
         uint amt = 0;
@@ -79,15 +79,15 @@ contract SimplePaymentChannel {
         }
 
         close_time = block.timestamp + close_duration;
-        Parties[2].bal = _recp_bal + _ptp_recp;
-        Parties[1].bal = _init_bal + _ptp_init;
+        Parties[2].bal = _recp_bal + uint(_ptp_recp);
+        Parties[1].bal = _init_bal + uint(_ptp_init);
         nonce = _nonce;
         return true;
         
     }
 
-    function challenge_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, uint _ptp_init, uint _ptp_recp) public returns (bool) {
-        require(_init_bal + _recp_bal + _ptp_init + _ptp_recp <= Parties[1].bal + Parties[2].bal);
+    function challenge_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, int _ptp_init, int _ptp_recp) public returns (bool) {
+        require(_init_bal + _recp_bal <= Parties[1].bal + Parties[2].bal);
         require(_signature.length == 2);
         require((keccak256(abi.encodePacked(_signature[0])) != keccak256(abi.encodePacked(_signature[1]))));
         uint amt = 0;
@@ -100,8 +100,8 @@ contract SimplePaymentChannel {
         if (_nonce < nonce) {
             return false;
         } else {
-            Parties[2].bal = _recp_bal + _ptp_recp;
-            Parties[1].bal = _init_bal + _ptp_init; //should add penalty for other party if challenge successful
+            Parties[2].bal = _recp_bal + uint(_ptp_recp);
+            Parties[1].bal = _init_bal + uint(_ptp_init); //should add penalty for other party if challenge successful
             //should close with new values if challenge successful
             return close_now();        
         }
@@ -124,15 +124,15 @@ contract SimplePaymentChannel {
     }
 
     function top_up() public payable {
+        bool status = false;
         if (msg.sender == Parties[1].addr) {
             Parties[1].bal += msg.value;
-            emit funcSuccess(true);
+            status = true;
         } else if (msg.sender == Parties[2].addr) {
             Parties[2].bal += msg.value;
-            emit funcSuccess(true);
-        } else {
-            emit funcSuccess(false);
+            status = true;
         }
+        emit funcSuccess(status);
     }
 
     function close() public payable returns (bool) {
