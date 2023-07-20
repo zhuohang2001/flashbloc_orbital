@@ -118,7 +118,6 @@ class channelStateView(GetUpdateViewSet):
                 recipient_neighbours = models.Channel.objects.filter(Q(status="INIT"), Q(initiator=acc)) #is using df better?
                 initiator_neighbours = models.Channel.objects.filter(Q(status="INIT"), Q(recipient=acc))
 
-                print(recipient_neighbours, initiator_neighbours)
 
                 for idx, r_n in enumerate(recipient_neighbours):
                     ledger = r_n.ledger
@@ -170,21 +169,16 @@ class channelStateView(GetUpdateViewSet):
             data = self.request.data
             walletAddress = data.get('walletAddress')
             targetAddress = data.get('targetAddress')
-            print("FIRST")
             walletObj = Account.objects.get(wallet_address=walletAddress)
             targetObj = Account.objects.get(wallet_address=targetAddress)
-            print("SECOND")
             initiatorBalance = Decimal.from_float(float(data.get('initiatorBalance')))
             recipientBalance = Decimal.from_float(float(data.get('recipientBalance')))
             targetEmail = data.get('targetEmail')
-            print("THIRD")
             #check if transaction.atomic will work since db only hit once, hence no pk to reference fk
             newChannel = models.Channel(initiator=walletObj, recipient=targetObj, status="RQ", total_balance=initiatorBalance + recipientBalance, channel_address=walletAddress + targetAddress)
             newChannel.save()
-            print("FORTH")
             newLedger = models.Ledger(channel=newChannel, latest_initiator_bal=initiatorBalance, latest_recipient_bal=recipientBalance) #does this work? (should work)
             newLedger.save()
-            print("FIFTH")
             '''
             write handler to send email of channel details with recipient
             '''
