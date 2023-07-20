@@ -4,7 +4,8 @@ import { currentChannel, editCurrentChannelPay, editCurrentChannelTopup } from '
 import { Contract, ethers } from 'ethers'
 import contract_abi from '../abi/contract_abi.json'
 import { useNavigate } from "react-router-dom";
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { topup_channel } from '../../contract_methods/channel_methods'
 

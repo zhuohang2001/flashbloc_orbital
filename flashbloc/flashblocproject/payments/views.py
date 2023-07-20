@@ -54,7 +54,8 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
             local_ptp_lst = []
             
             # with transaction.atomic():
-            per_intemediary_benefits = merchant_settlement / float(len(path_array))
+            per_intemediary_benefits = merchant_settlement / float(len(path_array)-1)
+            print("PATH ARRAY: ", path_array, len(path_array))
             arr_length = int(len(path_array))
             for idx in range(1, arr_length, 1):
                 print(idx, arr_length)
@@ -74,15 +75,16 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
                     if idx == 1:
                         initiator_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
                         recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits - merchant_settlement)
                     
                     else:
                         initiator_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
                         recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
 
                     tar_ledger.ptp_initiator_bal += Decimal.from_float(initiator_bal_delta)
                     tar_ledger.ptp_recipient_bal += Decimal.from_float(recipient_bal_delta)
                     tar_ledger.save()
-                    tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
                     tar_channel.save()
 
                 elif tar_channel_i:
@@ -99,15 +101,16 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
                     if idx == 1:
                         recipient_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
                         initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits - merchant_settlement)
                     
                     else:
                         recipient_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
                         initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
 
                     tar_ledger.ptp_initiator_bal += Decimal.from_float(initiator_bal_delta)
                     tar_ledger.ptp_recipient_bal += Decimal.from_float(recipient_bal_delta)
                     tar_ledger.save()
-                    tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
                     tar_channel.save()                
 
 

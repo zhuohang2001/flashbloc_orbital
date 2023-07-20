@@ -80,7 +80,7 @@ class TestReqChannel(APITestCase):
 
         self.client.force_authenticate(self.account1)
         response = self.client.post(url, payload, format='json')
-
+    
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
