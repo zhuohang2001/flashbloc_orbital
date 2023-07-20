@@ -242,7 +242,21 @@ useEffect(() => handleFilter(), [channels])
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2em' }}>
+    <div>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '50px', marginTop: '35px'}}>
+        <input
+          type="text"
+          className="form-control"
+          style={{ width: '50%' }}
+          placeholder="Search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <button className="btn btn-primary" onClick={handleFilter} style={{ marginLeft: '10px' }}>
+          Search
+        </button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2em' }}>
       <div
         style={{
           display: 'flex',
@@ -266,8 +280,17 @@ useEffect(() => handleFilter(), [channels])
           }}
         >
           <h2 style={{ color: 'black' }}>Pending Approval</h2>
-          <div style={{ maxHeight: '300px', overflowY: 'scroll' }}>
-            {/* Render original content for Pending Approval */}
+          <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px', flex: 1 }}>
+            {filteredData
+              .filter(item => item.status == "RQ")
+              .map((item, index) => (
+                <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                  {item.recipient} - {item.status}
+                  <button className="btn btn-primary" onClick={() => handleChannelApproval(item)} style={{ marginLeft: '50px' }}>
+                    Approve Channel
+                  </button>
+                </div>
+              ))}
           </div>
         </div>
         <div
@@ -284,8 +307,17 @@ useEffect(() => handleFilter(), [channels])
           }}
         >
           <h2 style={{ color: 'black' }}>Pending Creation</h2>
-          <div style={{ maxHeight: '300px', overflowY: 'scroll' }}>
-            {/* Render original content for Pending Creation */}
+          <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px', flex: 1 }}>
+            {filteredData
+              .filter(item => item.status == "APV" & item.initiator == loginAccount)
+              .map((item, index) => (
+                <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                  {item.recipient} - {item.status}
+                  <button className="btn btn-primary" onClick={() => handleChannelCreate(item)} style={{ marginLeft: '50px' }}>
+                    Create Channel
+                  </button>
+                </div>
+              ))}
           </div>
         </div>
       </div>
@@ -312,8 +344,17 @@ useEffect(() => handleFilter(), [channels])
           }}
         >
           <h2 style={{ color: 'black' }}>Pending Initialization</h2>
-          <div style={{ maxHeight: '300px', overflowY: 'scroll' }}>
-            {/* Render original content for Pending Initialization */}
+          <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px', flex: 1 }}>
+            {filteredData
+              .filter(item => item.status == "OP")
+              .map((item, index) => (
+                <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                  {item.recipient} - {item.status}
+                  <button className="btn btn-primary" onClick={() => handleChannelInit(item)} style={{ marginLeft: '50px' }}>
+                    Init Channel
+                  </button>
+                </div>
+              ))}
           </div>
         </div>
         <div
@@ -330,8 +371,20 @@ useEffect(() => handleFilter(), [channels])
           }}
         >
           <h2 style={{ color: 'black' }}>Active Channel</h2>
-          <div style={{ maxHeight: '300px', overflowY: 'scroll' }}>
-            {/* Render original content for Active Channel */}
+          <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px', flex: 1 }}>
+            {filteredData
+              .filter(item => item.status === "INIT")
+              .map((item, index) => (
+                <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                  <span>{item.recipient} - {item.status}</span>
+                  <button className="btn btn-primary" onClick={() => handleChannelTransfer(item)} style={{ marginLeft: '90px' }}>
+                    Transfer
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => handleDeclareClose(item)} style={{ marginLeft: '10px' }}>
+                    Declare Close
+                  </button>
+                </div>
+              ))}
           </div>
         </div>
         <div
@@ -347,11 +400,21 @@ useEffect(() => handleFilter(), [channels])
           }}
         >
           <h2 style={{ color: 'black' }}>Pending Close</h2>
-          <div style={{ maxHeight: '300px', overflowY: 'scroll' }}>
-            {/* Render original content for Pending Close */}
+          <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px' }}>
+            {filteredData
+              .filter(item => item.status == "LK")
+              .map((item, index) => (
+                <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                  {item.recipient} - {item.status}
+                  <button className="btn btn-primary" onClick={() => handleCloseChannel(item)} style={{ marginLeft: '50px' }}>
+                    Close Now
+                  </button>
+                </div>
+              ))}
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };
