@@ -67,13 +67,13 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
                     new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
                     # local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), ptp_bonus=Decimal.from_float(per_intemediary_benefits), payment_id=ptp_global, \
                     #                             local_nonce=int(new_nonce))
-                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), payment_id=ptp_global, \
+                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1))), payment_id=ptp_global, \
                                                 local_nonce=int(new_nonce))
                     local_ptp.save()
                     local_ptp_lst.append(local_ptp_lst)
 
-                    initiator_bal_delta = -(float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
-                    recipient_bal_delta = (float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
+                    initiator_bal_delta = -(float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1)))
+                    recipient_bal_delta = (float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1)))
 
                     # if idx == 1:
                     #     initiator_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
@@ -96,14 +96,14 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
                     new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
                     # local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), ptp_bonus=Decimal.from_float(per_intemediary_benefits), payment_id=ptp_global, \
                     #     local_nonce=int(new_nonce))
-                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), payment_id=ptp_global, \
+                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1))), payment_id=ptp_global, \
                         local_nonce=int(new_nonce))
                     local_ptp.save()
                     local_ptp_lst.append(local_ptp_lst)
 
 
-                    recipient_bal_delta = -(float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
-                    initiator_bal_delta = (float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
+                    recipient_bal_delta = -(float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1)))
+                    initiator_bal_delta = (float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1)))
 
                     # if idx == 1:
                     #     recipient_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)

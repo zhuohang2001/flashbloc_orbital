@@ -42,7 +42,7 @@ const ContainerPage = () => {
 //     dispatch(currentChannel({'address': current}))
 // }
 
-const handleFilter = async () => {
+const handleFilter = () => {
   const newFilter = channels.filter((value) => { //check if filter works
     return value.channel_address.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -54,7 +54,20 @@ const handleFilter = async () => {
 
 }; //will need to be expanded to also allow address search
 
+
 useEffect(() => handleFilter(), [channels])
+
+  // const handleSearchChannel = () => {
+  //   // Perform search logic here
+  //   console.log(loginAccount)
+  //   console.log('hi')
+  //   // You can filter the paymentStatuses array based on the searchQuery
+  //   // Update the filtered results to display in the respective containers
+  //   axiosInstance.get(`channelstate/get_targetChannel/?currAddress=${loginAccount}&q=${searchQuery}`)
+  //     .then((response) => {
+  //       console.log(response)
+  //     })
+  // };
   const handleChannelApproval = (item) => {
     axiosInstance
         .patch(`channelstate/approveChannel/`, {
