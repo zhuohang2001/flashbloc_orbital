@@ -72,15 +72,18 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
                     local_ptp.save()
                     local_ptp_lst.append(local_ptp_lst)
 
-                    if idx == 1:
-                        initiator_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
-                        recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
-                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits - merchant_settlement)
+                    initiator_bal_delta = -(float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
+                    recipient_bal_delta = (float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
+
+                    # if idx == 1:
+                    #     initiator_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
+                    #     recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    #     tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits - merchant_settlement)
                     
-                    else:
-                        initiator_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
-                        recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
-                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
+                    # else:
+                    #     initiator_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    #     recipient_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    #     tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
 
                     tar_ledger.ptp_initiator_bal += Decimal.from_float(initiator_bal_delta)
                     tar_ledger.ptp_recipient_bal += Decimal.from_float(recipient_bal_delta)
@@ -98,15 +101,19 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
                     local_ptp.save()
                     local_ptp_lst.append(local_ptp_lst)
 
-                    if idx == 1:
-                        recipient_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
-                        initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
-                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits - merchant_settlement)
+
+                    recipient_bal_delta = -(float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
+                    initiator_bal_delta = (float(amount_total) + (float(per_intemediary_benefits) * float(idx - 1)))
+
+                    # if idx == 1:
+                    #     recipient_bal_delta = -float(amount_total) + float(per_intemediary_benefits/2.0)
+                    #     initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    #     tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits - merchant_settlement)
                     
-                    else:
-                        recipient_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
-                        initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
-                        tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
+                    # else:
+                    #     recipient_bal_delta = -float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    #     initiator_bal_delta = float(amount_deposited) + float(per_intemediary_benefits/2.0)
+                    #     tar_channel.total_balance += Decimal.from_float(per_intemediary_benefits)
 
                     tar_ledger.ptp_initiator_bal += Decimal.from_float(initiator_bal_delta)
                     tar_ledger.ptp_recipient_bal += Decimal.from_float(recipient_bal_delta)

@@ -79,8 +79,8 @@ contract SimplePaymentChannel {
         }
 
         close_time = block.timestamp + close_duration;
-        Parties[2].bal = _recp_bal + uint(_ptp_recp);
-        Parties[1].bal = _init_bal + uint(_ptp_init);
+        Parties[2].bal = uint(int(_recp_bal) + _ptp_recp);
+        Parties[1].bal = uint(int(_init_bal) + _ptp_init);
         nonce = _nonce;
         return true;
         
@@ -100,8 +100,8 @@ contract SimplePaymentChannel {
         if (_nonce < nonce) {
             return false;
         } else {
-            Parties[2].bal = _recp_bal + uint(_ptp_recp);
-            Parties[1].bal = _init_bal + uint(_ptp_init); //should add penalty for other party if challenge successful
+            Parties[2].bal = uint(int(_recp_bal) + _ptp_recp);
+            Parties[1].bal = uint(int(_init_bal) + _ptp_init); //should add penalty for other party if challenge successful
             //should close with new values if challenge successful
             return close_now();        
         }

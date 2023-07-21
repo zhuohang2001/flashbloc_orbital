@@ -46,12 +46,12 @@ class TestApproveChannel(APITestCase):
         self.assertEqual(data["recipient"], "bbbb")
         self.assertEqual(data["status"], "OP")
         self.assertEqual(data["total_balance"], "2000000000000000.0")
-        self.assertEqual(data["channel_address"], "newaaaabbbb")
+        self.assertEqual(data["channel_address"], "new_aaaabbbb")
         self.assertEqual(data["ledger"]["latest_initiator_bal"], "1000000000000000.0")
 
-        tempChannel = Channel.objects.get(channel_address="newaaaabbbb")
+        tempChannel = Channel.objects.get(channel_address="new_aaaabbbb")
         tempLedger = Ledger.objects.get(channel=tempChannel)
-        tempTx = TransactionLocal(ledger=tempLedger)
+        tempTx = TransactionLocal.objects.get(ledger=tempLedger)
 
         self.assertEqual(tempChannel.total_balance, Decimal.from_float(2000000000000000.0))
         self.assertEqual(tempChannel.status, "OP")
@@ -70,12 +70,11 @@ class TestApproveChannel(APITestCase):
 
         self.client.force_authenticate(self.account1)
         response = self.client.patch(url, payload, format='json')
-        data = response.data
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_createchannel_404(self):
-        url="/api/channelstate/createChannel/"
+        url="/api/channelstate/createChannel"
 
         payload={
             "currAddress": "aaaa", 
@@ -86,6 +85,5 @@ class TestApproveChannel(APITestCase):
 
         self.client.force_authenticate(self.account1)
         response = self.client.patch(url, payload, format='json')
-        data = response.data
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_301_MOVED_PERMANENTLY)

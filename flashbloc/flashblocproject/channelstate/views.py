@@ -319,15 +319,18 @@ class channelStateView(GetUpdateViewSet):
             channelAddress = data.get('channelAddress')
             currAddress = data.get('currAddress')
             targetChannel = models.Channel.objects.get(channel_address=channelAddress)
+            print("OK 1")
             with transaction.atomic():
                 if targetChannel and targetChannel.status == "INIT":
                     targetLedger = targetChannel.ledger
                     bal_initiator = float(targetLedger.locked_initiator_bal) + float(targetLedger.ptp_initiator_bal) #are these info needed?
                     bal_recipient = float(targetLedger.locked_recipient_bal) + float(targetLedger.ptp_recipient_bal)
+                    print('OK 2')
                     tx_receipt = targetLedger.locked_tx #is this the correct way to use related name?
                     if targetChannel.initiator == tx_receipt.receiver:
                         sig_initiator = tx_receipt.receiver_sig #assumes that this is the latest tx that can be signed by closer hence is recipient
                         sig_recipient = tx_receipt.sender_sig
+                    
                     
                     else: 
                         sig_recipient = tx_receipt.receiver_sig #assumes that this is the latest tx that can be signed by closer hence is recipient
@@ -343,7 +346,7 @@ class channelStateView(GetUpdateViewSet):
                     res_dic["bal_initiator"] = bal_initiator
                     res_dic["bal_recipient"] = bal_recipient
                     targetChannel.save()
-
+            print('OK 3')
             res_dict = json.dumps(res_dic)
             return Response(res_dict, status=status.HTTP_200_OK)
 
