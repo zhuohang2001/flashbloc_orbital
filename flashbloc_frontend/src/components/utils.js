@@ -20,7 +20,7 @@ export const sign_latest_tx = async (currAddress, channelAddress) => { //how to 
                 signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
                 res = data.result
                 nonce = data.latestNonce
-                axiosInstance.post(`channelstate/signLatestTx/`, {
+                await axiosInstance.post(`channelstate/signLatestTx/`, {
                     currAddress: currAddress, 
                     channelAddress: channelAddress, 
                     txSignature: signedMessage, 
@@ -67,16 +67,18 @@ export const sign_locked_tx = async (currAddress, channelAddress) => { //how to 
                 [data.channelAddress.toLowerCase(), 0, parseInt(data.initBal) + ";" + parseInt(data.recpBal), data.latestNonce])
                 signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
 
-                axiosInstance.post(`channelstate/signLatestTx/`, {
+                await axiosInstance.post(`channelstate/signLatestTx/`, {
                     currAddress: currAddress, 
                     channelAddress: channelAddress, 
                     txSignature: signedMessage, 
                     nonce: data.latestNonce
                 }).then(response => console.log(response))
+                nonce = data.latestNonce
             } else {
                 hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
                 [data.channelAddress.toLowerCase(), 0, parseInt(data.initLkBal) + ";" + parseInt(data.recpLkBal), data.lockedNonce])
                 signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
+                nonce = data.lockedNonce
             }
 
 
@@ -88,7 +90,7 @@ export const sign_locked_tx = async (currAddress, channelAddress) => { //how to 
             // signedMessage = await provider.personalSign(hashedMsg, signer)
             // signedMessage = await signer.provider.send('personal_sign', [hashedMsg, "0xdf09aA84d23Cc649B557f8B107a676dACaAd228e".toLowerCase()])
             res = data.result
-            nonce = data.lockedNonce
+            
             console.log(signedMessage)
             console.log("signing not needed")
             

@@ -52,7 +52,7 @@ const ChannelDetail = () => {
         } else {
             return
         }
-        axiosInstance.get(`channelstate/getLatestTx/?currAddress=${loginAccount}&channelAddress=${curr_channel.channel_address}`)
+        await axiosInstance.get(`channelstate/getLatestTx/?currAddress=${loginAccount}&channelAddress=${curr_channel.channel_address}`)
         .then((response) => response.data)
         .then((arr) => JSON.parse(arr))
         .then(async (data) => {
@@ -60,7 +60,7 @@ const ChannelDetail = () => {
             [data.channelAddress.toLowerCase(), 0, parseInt(amtInit) + ";" + parseInt(amtRecp), ethers.BigNumber.from(parseInt(data.latestNonce) + 1)])
             const signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
 
-            axiosInstance
+            await axiosInstance
             .post(`payments/local/executeTxLocal/`, {
             currAddress: loginAccount, 
             targetAddress: receiver, 

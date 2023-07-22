@@ -385,7 +385,7 @@ class channelStateView(GetUpdateViewSet):
                 #     init_bal += float(tar_ledger.ptp_initiator_bal) + float(tar_ledger.topup_initiator_bal)
                 # else:
                 #     recp_bal += float(tar_ledger.ptp_recipient_bal) + float(tar_ledger.topup_recipient_bal)
-                if latest_tx.receiver == curr_account and latest_tx.receiver_sig == '':
+                if latest_tx.receiver == curr_account and not latest_tx.receiver_sig:
                     stat = "sign here"
                 info_dict = {
                     "result": stat, 
@@ -476,11 +476,11 @@ class channelStateView(GetUpdateViewSet):
             channelAddress = data.get('channelAddress')
             currSig = data.get('currSig')
             tar_channel = models.Channel.objects.get(channel_address=channelAddress)
-            print("TARGET CHANNEL: ", tar_channel)
+            # print("TARGET CHANNEL: ", tar_channel)
             tar_ledger = tar_channel.ledger
             locked_tx = tar_ledger.locked_tx
-            print("LOCKED TX: ", locked_tx)
-            print("CURR SIG: ", currSig, currSig == locked_tx.sender_sig)
+            # print("LOCKED TX: ", locked_tx)
+            # print("CURR SIG: ", currSig, currSig == locked_tx.sender_sig)
             if currSig == locked_tx.sender_sig or currSig == locked_tx.receiver_sig:
                 if locked_tx.receiver == tar_channel.initiator:
                     info_dict = {
