@@ -44,7 +44,7 @@ class testCloseChannel(APITestCase):
 
         self.client.force_authenticate(self.account2)
         response = self.client.patch(url, payload, format='json')
-        data = response.data
+        data = json.loads(response.data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(data["success"], True)

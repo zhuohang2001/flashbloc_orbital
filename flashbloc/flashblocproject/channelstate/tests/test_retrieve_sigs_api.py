@@ -12,7 +12,7 @@ from decimal import Decimal
 import pandas as pd
 
 
-class testDeclareCloseChannel(APITestCase):
+class testRetrieveSigs(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
@@ -34,42 +34,44 @@ class testDeclareCloseChannel(APITestCase):
         self.ledger12.locked_tx = self.tx12
         self.ledger12.save()
 
-    def test_declareclosechannel_correct(self):
-        url="/api/channelstate/declareCloseChannel/"
+    def test_retrieve_sigs_correct(self):
+        url="/api/channelstate/retrieve_sigs/"
 
         payload = {
             "channelAddress": "aaaabbbb", 
-            "currAddress": "aaaa"
+            "currSig": "aaaa_sign"
         }
 
         self.client.force_authenticate(self.account1)
         response = self.client.post(url, payload, format='json')
         data = json.loads(response.data)
-        print("RESPONSE DATA", data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(data["sig_initiator"], "aaaa_sign")
-        self.assertEqual(data["sig_recipient"], "bbbb_sign")
-        self.assertEqual(data["bal_initiator"], 1000000000000000.0)
-        self.assertEqual(data["bal_recipient"], 1000000000000000.0)
+        self.assertEqual(data["result"], "success")
+        self.assertEqual(data["initSig"], "aaaa_sign")
+        self.assertEqual(data["recpSig"], "bbbb_sign")
 
-        tempChannel = Channel.objects.get(channel_address="aaaabbbb")
-        tempLedger = Ledger.objects.get(channel=tempChannel)
-        tempTx = TransactionLocal.objects.get(ledger=tempLedger)
+    def test_retrieve_sigs_wrong_sig(self):
+        url="/api/channelstate/retrieve_sigs/"
 
-        self.assertEqual(tempChannel.total_balance, Decimal.from_float(2000000000000000.0))
-        self.assertEqual(tempChannel.status, "LK")
-        self.assertEqual(tempLedger.latest_initiator_bal, Decimal.from_float(1000000000000000.0))
-        self.assertEqual(tempTx.receiver_sig, "bbbb_sign")
-        self.assertEqual(tempLedger.locked_tx, tempTx)
-        self.assertEqual(tempChannel.closed_by, self.account1)
+        payload = {
+            "channelAddress": "aaaabbbb", 
+            "currSig": "xxxx_sign"
+        }
 
-    def test_declareclosechannel_400(self):
-        url="/api/channelstate/declareCloseChannel/"
+        self.client.force_authenticate(self.account1)
+        response = self.client.post(url, payload, format='json')
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data["result"], "no matching signature")
+
+    def test_retrieve_sigs_400(self):
+        url="/api/channelstate/retrieve_sigs/"
 
         payload = {
             "channelAddress": "xxxx", 
-            "currAddress": "aaaa"
+            "currSig": "aaaa_sign"
         }
 
         self.client.force_authenticate(self.account1)
@@ -77,12 +79,12 @@ class testDeclareCloseChannel(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_declareclosechannel_400(self):
-        url="/api/channelstate/declareCloseChannel"
+    def test_retrieve_sigs_301(self):
+        url="/api/channelstate/retrieve_sigs"
 
         payload = {
             "channelAddress": "aaaabbbb", 
-            "currAddress": "aaaa"
+            "currSig": "aaaa_sign"
         }
 
         self.client.force_authenticate(self.account1)

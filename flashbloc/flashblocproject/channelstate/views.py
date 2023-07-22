@@ -360,6 +360,7 @@ class channelStateView(GetUpdateViewSet):
             channelAddress = request.GET.get('channelAddress')
             info_dict = {}
             tar_channel = models.Channel.objects.get(channel_address=channelAddress)
+            curr_account = Account.objects.get(wallet_address=currAddress)
             init_bal = 0.0
             recp_bal = 0.0
             latest_nonce = -1
@@ -375,13 +376,15 @@ class channelStateView(GetUpdateViewSet):
                     lk_recp_bal = float(tar_ledger.locked_recipient_bal)
                     latest_tx = tar_ledger.latest_tx #check if this exists? (will it error if this does not exist?)
                     latest_nonce = latest_tx.local_nonce
-                    locked_nonce = tar_ledger.locked_tx.local_nonce
-                    if latest_tx and latest_tx.receiver == currAddress:
+                    locked_tx = tar_ledger.locked_tx
+                    if locked_tx:
+                        locked_nonce = locked_tx.local_nonce
+                    if latest_tx:
                         # amount = latest_tx.amount
-                        if tar_channel.initiator == str(currAddress):
-                            init_bal += float(tar_channel.ptp_initiator_bal) + float(tar_channel.topup_initiator_bal)
+                        if tar_channel.initiator == curr_account:
+                            init_bal += float(tar_ledger.ptp_initiator_bal) + float(tar_ledger.topup_initiator_bal)
                         else:
-                            recp_bal += float(tar_channel.ptp_recipient_bal) + float(tar_channel.topup_recipient_bal)
+                            recp_bal += float(tar_ledger.ptp_recipient_bal) + float(tar_ledger.topup_recipient_bal)
                         
                         info_dict = {
                             "result": "sign here", 
@@ -423,24 +426,25 @@ class channelStateView(GetUpdateViewSet):
             nonce = data.get("nonce")
             channelAddress = data.get("channelAddress")
             tar_channel = models.Channel.objects.get(channel_address=channelAddress)
+            curr_account = Account.objects.get(wallet_address=currAddress)
             if tar_channel:
                 tar_ledger = tar_channel.ledger
                 if tar_channel.status != "CD":
                     latest_tx = tar_ledger.latest_tx
                     with transaction.atomic():
-                        if latest_tx.receiver == currAddress and latest_tx.local_nonce == int(nonce):
+                        if latest_tx.receiver == curr_account and latest_tx.local_nonce == int(nonce):
                             latest_tx.receiver_sig = str(txSig)
                             latest_tx.save()
                             tar_ledger.locked_tx = latest_tx
-                            if tar_channel.initiator == str(currAddress):
-                                tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal + tar_ledger.ptp_initiator_bal + tar_ledger.topup_initiator_bal
-                                tar_ledger.ptp_initiator_bal = float(0)
-                                tar_ledger.topup_initiator_bal = float(0)
+                            if tar_channel.initiator == curr_account:
+                                tar_ledger.latest_initiator_bal = tar_ledger.latest_initiator_bal + tar_ledger.ptp_initiator_bal + tar_ledger.topup_initiator_bal
+                                tar_ledger.ptp_initiator_bal = Decimal.from_float(0.0)
+                                tar_ledger.topup_initiator_bal = Decimal.from_float(0.0)
                                 
                             else:
-                                tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal + tar_ledger.ptp_recipient_bal + tar_ledger.topup_recipient_bal
-                                tar_ledger.ptp_recipient_bal = float(0)
-                                tar_ledger.topup_recipient_bal = float(0)
+                                tar_ledger.latest_recipient_bal = tar_ledger.latest_recipient_bal + tar_ledger.ptp_recipient_bal + tar_ledger.topup_recipient_bal
+                                tar_ledger.ptp_recipient_bal = Decimal.from_float(0.0)
+                                tar_ledger.topup_recipient_bal = Decimal.from_float(0.0)
 
                             tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal
                             tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal
