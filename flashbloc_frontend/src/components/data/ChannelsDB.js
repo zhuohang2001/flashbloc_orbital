@@ -191,6 +191,7 @@ useEffect(() => handleFilter(), [channels])
       tarAcc = item.recipient
     }
     const signArr = await sign_latest_tx(loginAccount, item.channel_address)
+    console.log(signArr, "CLOSING SIGN ARR")
     const signedMsg = signArr[0]
     const signedStatus = signArr[1]
     const currNonce = signArr[2]
