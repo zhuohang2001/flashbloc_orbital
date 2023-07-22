@@ -380,10 +380,10 @@ class channelStateView(GetUpdateViewSet):
                 locked_nonce = locked_tx.local_nonce
             if latest_tx:
                 # amount = latest_tx.amount
-                if tar_channel.initiator == curr_account:
-                    init_bal += float(tar_ledger.ptp_initiator_bal) + float(tar_ledger.topup_initiator_bal)
-                else:
-                    recp_bal += float(tar_ledger.ptp_recipient_bal) + float(tar_ledger.topup_recipient_bal)
+                # if tar_channel.initiator == curr_account:
+                #     init_bal += float(tar_ledger.ptp_initiator_bal) + float(tar_ledger.topup_initiator_bal)
+                # else:
+                #     recp_bal += float(tar_ledger.ptp_recipient_bal) + float(tar_ledger.topup_recipient_bal)
                 
                 info_dict = {
                     "result": "sign here", 
