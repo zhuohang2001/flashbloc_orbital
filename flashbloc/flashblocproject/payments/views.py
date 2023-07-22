@@ -183,7 +183,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                     tar_ledger.ptp_initiator_bal = Decimal.from_float(float(0))
                     tar_ledger.topup_initiator_bal = Decimal.from_float(float(0))
                     tar_ledger.latest_initiator_bal -= Decimal.from_float(sender_amt)
-                    tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal #
+                    # tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal #
                     # gota test if correct amt
                     tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
                     print("4")
@@ -196,7 +196,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                     tar_ledger.ptp_recipient_bal = Decimal.from_float(float(0))
                     tar_ledger.topup_recipient_bal = Decimal.from_float(float(0))
                     tar_ledger.latest_recipient_bal -= Decimal.from_float(sender_amt)
-                    tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
+                    # tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
                     tar_ledger.latest_initiator_bal += Decimal.from_float(amount)
                     print("6")
 
