@@ -197,7 +197,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                     tar_ledger.topup_recipient_bal = Decimal.from_float(float(0))
                     tar_ledger.latest_recipient_bal -= Decimal.from_float(sender_amt)
                     tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal #gota test if correct amt
-                    tar_ledger.latest_recipient_bal += Decimal.from_float(amount)
+                    tar_ledger.latest_initiator_bal += Decimal.from_float(amount)
                     print("6")
 
                 tar_ledger.latest_tx = new_transaction #gota db check this
