@@ -486,14 +486,18 @@ class channelStateView(GetUpdateViewSet):
                     info_dict = {
                         "result": "success", 
                         "initSig": locked_tx.receiver_sig, 
-                        "recpSig": locked_tx.sender_sig
+                        "recpSig": locked_tx.sender_sig, 
+                        "lkInitBal": float(tar_ledger.locked_initiator_bal), 
+                        "lkRecpBal": float(tar_ledger.locked_recipient_bal)
                     }
                 
                 else:
                     info_dict = {
                         "result": "success", 
                         "initSig": locked_tx.sender_sig, 
-                        "recpSig": locked_tx.receiver_sig
+                        "recpSig": locked_tx.receiver_sig, 
+                        "lkInitBal": float(tar_ledger.locked_initiator_bal), 
+                        "lkRecpBal": float(tar_ledger.locked_recipient_bal)
                     }
 
             else    :

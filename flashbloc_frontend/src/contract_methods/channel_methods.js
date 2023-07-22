@@ -13,7 +13,7 @@ export const recepient_initiate = async (channel, val) => {
 }
 
 
-export const declare_close_channel = async (channel, sigs, item, nonce) => {
+export const declare_close_channel = async (channel, sigs, item, nonce, data) => {
     // const sigs = [
     //     "0x9476a60f5d44b367ee166538341960c2d59106d88ebdf79e194bff9395c97e97206614edf31c14c88ee37e99778ae7d8b8a07d5d7cdb9e52d48702682bbc453a1c", 
     //     "0x3931f54be1f576ee7eef9df570bb66568a46a39815588b9f62cb45f094009b4664232c09273896a185a1c257af01ee2ca3b7c27502486ef02620b0ce91cc75be1b"
@@ -25,8 +25,8 @@ export const declare_close_channel = async (channel, sigs, item, nonce) => {
     console.log(sigs)
     console.log(item)
     console.log(nonce)
-    const tx = await channel.declare_close(sigs, nonce, parseInt(item.ledger.locked_initiator_bal), 
-        parseInt(item.ledger.locked_recipient_bal), parseInt(item.ledger.ptp_initiator_bal), parseInt(item.ledger.ptp_recipient_bal))
+    const tx = await channel.declare_close(sigs, nonce, parseInt(data.lkInitBal), 
+        parseInt(data.lkRecpBal), parseInt(item.ledger.ptp_initiator_bal), parseInt(item.ledger.ptp_recipient_bal))
     tx.wait()
     console.log('declared_close')
 }

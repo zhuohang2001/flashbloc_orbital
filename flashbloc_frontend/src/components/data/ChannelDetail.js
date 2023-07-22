@@ -43,11 +43,11 @@ const ChannelDetail = () => {
         }
         if (identityState == "initiator") {
             amtInit = maxPayableState - transactionAmtState
-            amtRecp = curr_channel.ledger.locked_recipient_bal + transactionAmtState
+            amtRecp = parseFloat(curr_channel.ledger.locked_recipient_bal) + parseFloat(transactionAmtState)
             receiver = curr_channel.recipient
         } else if (identityState == "recipient") {
             amtRecp = maxPayableState - transactionAmtState
-            amtInit = curr_channel.ledger.locked_initiator_bal + transactionAmtState
+            amtInit = parseFloat(curr_channel.ledger.locked_initiator_bal) + parseFloat(transactionAmtState)
             receiver = curr_channel.initiator
         } else {
             return
@@ -56,6 +56,10 @@ const ChannelDetail = () => {
         .then((response) => response.data)
         .then((arr) => JSON.parse(arr))
         .then(async (data) => {
+            console.log("transaction logging")
+            console.log(data.latestNonce)
+            console.log(amtRecp)
+            console.log(amtInit)
             const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
             [data.channelAddress.toLowerCase(), 0, parseInt(amtInit) + ";" + parseInt(amtRecp), ethers.BigNumber.from(parseInt(data.latestNonce) + 1)])
             const signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))

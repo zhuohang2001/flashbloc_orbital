@@ -166,7 +166,7 @@ useEffect(() => handleFilter(), [channels])
     .then((arr) => JSON.parse(arr))
     .then((data) => {
       if (data.result == "success") {
-        declare_close_channel(channelContract, [data.initSig, data.recpSig], item, currNonce)
+        declare_close_channel(channelContract, [data.initSig, data.recpSig], item, currNonce, data)
         .then(
           axiosInstance
           .post(`channelstate/declareCloseChannel/`, {
