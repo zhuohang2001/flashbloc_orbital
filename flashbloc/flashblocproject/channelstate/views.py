@@ -367,35 +367,34 @@ class channelStateView(GetUpdateViewSet):
             locked_nonce = -1
             lk_init_bal = 0.0
             lk_recp_bal = 0.0
-            with transaction.atomic():
-                if tar_channel:
-                    tar_ledger = tar_channel.ledger
-                    init_bal = float(tar_ledger.latest_initiator_bal)
-                    recp_bal = float(tar_ledger.latest_recipient_bal)
-                    lk_init_bal = float(tar_ledger.locked_initiator_bal)
-                    lk_recp_bal = float(tar_ledger.locked_recipient_bal)
-                    latest_tx = tar_ledger.latest_tx #check if this exists? (will it error if this does not exist?)
-                    latest_nonce = latest_tx.local_nonce
-                    locked_tx = tar_ledger.locked_tx
-                    if locked_tx:
-                        locked_nonce = locked_tx.local_nonce
-                    if latest_tx:
-                        # amount = latest_tx.amount
-                        if tar_channel.initiator == curr_account:
-                            init_bal += float(tar_ledger.ptp_initiator_bal) + float(tar_ledger.topup_initiator_bal)
-                        else:
-                            recp_bal += float(tar_ledger.ptp_recipient_bal) + float(tar_ledger.topup_recipient_bal)
-                        
-                        info_dict = {
-                            "result": "sign here", 
-                            "channelAddress": str(channelAddress), 
-                            "initBal": int(init_bal), 
-                            "recpBal": int(recp_bal), 
-                            "initLkBal": int(lk_init_bal), 
-                            "recpLkBal": int(lk_recp_bal), 
-                            "latestNonce": int(latest_nonce), 
-                            "lockedNonce": int(locked_nonce)
-                        }
+            tar_ledger = tar_channel.ledger
+            latest_tx = tar_ledger.latest_tx #check if this exists? (will it error if this does not exist?)
+
+            init_bal = float(tar_ledger.latest_initiator_bal)
+            recp_bal = float(tar_ledger.latest_recipient_bal)
+            lk_init_bal = float(tar_ledger.locked_initiator_bal)
+            lk_recp_bal = float(tar_ledger.locked_recipient_bal)
+            latest_nonce = latest_tx.local_nonce
+            locked_tx = tar_ledger.locked_tx
+            if locked_tx:
+                locked_nonce = locked_tx.local_nonce
+            if latest_tx:
+                # amount = latest_tx.amount
+                if tar_channel.initiator == curr_account:
+                    init_bal += float(tar_ledger.ptp_initiator_bal) + float(tar_ledger.topup_initiator_bal)
+                else:
+                    recp_bal += float(tar_ledger.ptp_recipient_bal) + float(tar_ledger.topup_recipient_bal)
+                
+                info_dict = {
+                    "result": "sign here", 
+                    "channelAddress": str(channelAddress), 
+                    "initBal": int(init_bal), 
+                    "recpBal": int(recp_bal), 
+                    "initLkBal": int(lk_init_bal), 
+                    "recpLkBal": int(lk_recp_bal), 
+                    "latestNonce": int(latest_nonce), 
+                    "lockedNonce": int(locked_nonce)
+                    }
 
             if info_dict == {}:
                 info_dict = {

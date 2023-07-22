@@ -67,7 +67,7 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
                     new_nonce = models.TransactionLocal.objects.filter(ledger=tar_ledger).count()
                     # local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(amount_deposited), ptp_bonus=Decimal.from_float(per_intemediary_benefits), payment_id=ptp_global, \
                     #                             local_nonce=int(new_nonce))
-                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1))), payment_id=ptp_global, \
+                    local_ptp = models.PtpLocal(ledger=tar_ledger, amount=Decimal.from_float(float(amount_total) - (float(per_intemediary_benefits) * float(idx - 1)))  , payment_id=ptp_global, \
                                                 local_nonce=int(new_nonce))
                     local_ptp.save()
                     local_ptp_lst.append(local_ptp_lst)
@@ -249,9 +249,9 @@ class TopUpPaymentsViewSet(GetUpdateViewSet):
                     topup_nonce = models.TopupReceipt.objects.filter(ledger=tar_ledger).count()
                     print("3")
                     if tar_channel.initiator == curr_acc:
-                        tar_ledger.topup_initiator_bal += Decimal.from_float(float(amount))
+                        tar_ledger.ptp_initiator_bal += Decimal.from_float(float(amount))
                     else:
-                        tar_ledger.topup_recipient_bal += Decimal.from_float(float(amount))
+                        tar_ledger.ptp_recipient_bal += Decimal.from_float(float(amount))
                     topup_receipt = models.TopupReceipt(sender=curr_acc, local_nonce=int(topup_nonce), ledger=tar_ledger)
                     print("4")
                     tar_ledger.save()
