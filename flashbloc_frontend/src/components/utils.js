@@ -63,21 +63,22 @@ export const sign_locked_tx = async (currAddress, channelAddress) => { //how to 
 
 
             if (data.result == "sign here") {
-                const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
+                var hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
                 [data.channelAddress.toLowerCase(), 0, parseInt(data.initBal) + ";" + parseInt(data.recpBal), data.latestNonce])
-                const latestSignedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
+                signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
 
                 axiosInstance.post(`channelstate/signLatestTx/`, {
                     currAddress: currAddress, 
                     channelAddress: channelAddress, 
-                    txSignature: latestSignedMessage, 
+                    txSignature: signedMessage, 
                     nonce: data.latestNonce
                 }).then(response => console.log(response))
+            } else {
+                hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
+                [data.channelAddress.toLowerCase(), 0, parseInt(data.initLkBal) + ";" + parseInt(data.recpLkBal), data.lockedNonce])
+                signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
             }
 
-            const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
-            [data.channelAddress.toLowerCase(), 0, parseInt(data.initLkBal) + ";" + parseInt(data.recpLkBal), data.lockedNonce])
-            signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
 
             // const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
             // ["0x5007A5a681274e415043b71562e35D9073be38Ca".toLowerCase(), 0, parseInt(data.initLkBal) + ";" + parseInt(data.recpLkBal), data.lockedNonce])

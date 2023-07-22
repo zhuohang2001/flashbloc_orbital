@@ -369,6 +369,7 @@ class channelStateView(GetUpdateViewSet):
             lk_recp_bal = 0.0
             tar_ledger = tar_channel.ledger
             latest_tx = tar_ledger.latest_tx #check if this exists? (will it error if this does not exist?)
+            stat = "no valid tx to sign"
 
             init_bal = float(tar_ledger.latest_initiator_bal)
             recp_bal = float(tar_ledger.latest_recipient_bal)
@@ -384,9 +385,10 @@ class channelStateView(GetUpdateViewSet):
                 #     init_bal += float(tar_ledger.ptp_initiator_bal) + float(tar_ledger.topup_initiator_bal)
                 # else:
                 #     recp_bal += float(tar_ledger.ptp_recipient_bal) + float(tar_ledger.topup_recipient_bal)
-                
+                if latest_tx.receiver == curr_account and latest_tx.receiver_sig == '':
+                    stat = "sign here"
                 info_dict = {
-                    "result": "sign here", 
+                    "result": stat, 
                     "channelAddress": str(channelAddress), 
                     "initBal": int(init_bal), 
                     "recpBal": int(recp_bal), 
@@ -451,7 +453,7 @@ class channelStateView(GetUpdateViewSet):
                             # tar_channel.status = "INIT" #why change to init?
                             tar_channel.save()
                             tar_ledger.save()
-                        
+                
                 info_dict = {
                     "result": "success", 
                     "signed_sig": latest_tx.receiver_sig
