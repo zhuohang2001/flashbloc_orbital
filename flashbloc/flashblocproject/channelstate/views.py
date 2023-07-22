@@ -447,6 +447,7 @@ class channelStateView(GetUpdateViewSet):
 
                             tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal
                             tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal
+                            tar_ledger.locked_tx = tar_ledger.latest_tx
                             # tar_channel.status = "INIT" #why change to init?
                             tar_channel.save()
                             tar_ledger.save()

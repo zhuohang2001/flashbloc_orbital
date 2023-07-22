@@ -60,6 +60,15 @@ export const sign_locked_tx = async (currAddress, channelAddress) => { //how to 
         .then(async (data) => {
             console.log("LOGGING DATA")
             console.log(data)   
+            if (data.result == "sign here") {
+
+                axiosInstance.post(`channelstate/signLatestTx/`, {
+                    currAddress: currAddress, 
+                    channelAddress: channelAddress, 
+                    txSignature: signedMessage, 
+                    nonce: data.latestNonce
+                }).then(response => console.log(response))
+            }
 
             const hashedMsg = ethers.utils.solidityKeccak256(["address", "uint", "string", "uint"], 
             [data.channelAddress.toLowerCase(), 0, parseInt(data.initLkBal) + ";" + parseInt(data.recpLkBal), data.lockedNonce])
