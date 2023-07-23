@@ -204,7 +204,7 @@ useEffect(() => handleFilter(), [channels])
       .then((data) => {
         if (data.result == "success") {
           if (signedStatus == "sign here") {
-            challenge_close_channel(channelContract, [data.initSig, data.recpSig], item, currNonce)
+            challenge_close_channel(channelContract, [data.initSig, data.recpSig], item, currNonce, data)
             .then(
               axiosInstance
               .patch(`channelstate/closeChannel/`, {

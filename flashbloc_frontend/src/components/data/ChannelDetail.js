@@ -4,6 +4,8 @@ import { currentChannel, editCurrentChannelPay, editCurrentChannelTopup } from '
 import { Contract, ethers } from 'ethers'
 import contract_abi from '../abi/contract_abi.json'
 import { topup_channel } from '../../contract_methods/channel_methods'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import getCookie from '../../csrf'
 import { MDBCol, MDBIcon, MDBFormInline, MDBBtn } from "mdbreact";
@@ -23,6 +25,19 @@ const ChannelDetail = () => {
     let tempProvider = new ethers.providers.Web3Provider(window.ethereum)
     let signer = tempProvider.getSigner()
     const curr_channel_contract = new ethers.Contract(curr_channel.channel_address, contract_abi, signer)
+
+    showToastSuccessActionMessage = (action) => {
+        toast.success(`Successful ${action} !`, {
+            position: toast.POSITION.TOP_RIGHT
+        });
+    };
+
+    showToastErrorActionMessage = () => {
+        toast.error(`Error while making ${action} !`, {
+            position: toast.POSITION.TOP_CENTER
+        });
+    };
+
 
     useEffect(() => {
         if (loginAccount == curr_channel.initiator) {
@@ -76,6 +91,11 @@ const ChannelDetail = () => {
                 "identity": identityState, 
                 "amt": transactionAmtState
             }))
+            if (res.data.status == "SS") {
+                this.showToastSuccessActionMessage('payment')
+            } else {
+                this.showToastErrorActionMessage('payment')
+            }
             }
         )
         })
@@ -112,6 +132,9 @@ const ChannelDetail = () => {
                                         "amt": topupAmtState
                                     }))
                                     console.log("topup success")
+                                    this.showToastSuccessActionMessage('topup')
+                                } else {
+                                    this.showToastErrorActionMessage('topup')
                                 }
                             })
                 }

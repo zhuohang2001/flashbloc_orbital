@@ -216,7 +216,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                 return Response(result, status=status.HTTP_200_OK)       
 
             msg = json.dumps({
-                "error": "tx instance not created"
+                "status": "tx instance not created"
             })
             return Response(msg, status=status.HTTP_200_OK)
 

@@ -39,9 +39,9 @@ export const close_now_channel = async (channel) => {
 }
 
 
-export const challenge_close_channel = async (channel, sigs, item, nonce) => {
-    await channel.challenge_close(sigs, nonce, item.ledger.locked_initiator_bal, 
-        item.ledger.locked_recipient_bal, item.ledger.ptp_initiator_bal, item.ledger.ptp_recipient_bal)
+export const challenge_close_channel = async (channel, sigs, item, nonce, data) => {
+    await channel.challenge_close(sigs, nonce, parseInt(data.lkInitBal), 
+        parseInt(data.lkRecpBal), item.ledger.ptp_initiator_bal, item.ledger.ptp_recipient_bal)
     console.log('challenged_close')
     
 }

@@ -1,5 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { currentChannel, editCurrentChannelPay, editCurrentChannelTopup } from '../../state_reducers/ChannelReducer'
 import { Contract, ethers } from 'ethers'
 import contract_abi from '../abi/contract_abi.json'
@@ -25,7 +27,31 @@ const AccountDetail = () => {
 
     const curr_account = useSelector((state) => state.accounts.value.current)
 
-    const handleSearchPath = async () => {
+    showToastSuccessPaymentMessage = () => {
+        toast.success('Successful payment !', {
+            position: toast.POSITION.TOP_RIGHT
+        });
+    };
+
+    showToastErrorPaymentMessage = () => {
+        toast.error('Error while making payment !', {
+            position: toast.POSITION.TOP_CENTER
+        });
+    };
+
+    showToastSuccessPathMessage = () => {
+        toast.success('Successful path found !', {
+            position: toast.POSITION.TOP_RIGHT
+        });
+    };
+
+    showToastErrorPathMessage = () => {
+        toast.error('No path found !', {
+            position: toast.POSITION.TOP_CENTER
+        });
+    };
+
+    const handleSearchPaymentPath = async () => {
         axiosInstance.get(`channelstate/get_path/?amount=${transactionAmtState}&walletAddress=${loginAccount}&targetAddress=${curr_account.wallet_address}`)
             .then((response) => JSON.parse(response.data))
             .then((data) => {
@@ -34,8 +60,10 @@ const AccountDetail = () => {
                     //display pay button
                     setPaymentPathState(path)
                     setPayButtonState(true)
+                    this.showToastSuccessPathMessage()
                 } else {
                     //display no viable path logo
+                    this.showToastErrorPathMessage()
                 }   
             })
     }
@@ -51,8 +79,10 @@ const AccountDetail = () => {
             .then((data) => {
                 if (data.status == "SS") {
                     //display success toast msg
+                    this.showToastSuccessPaymentMessage()
                 } else {
                     //display failure toast msg
+                    this.showToastErrorPaymentMessage()
                 }
             })
     }
@@ -117,7 +147,7 @@ const AccountDetail = () => {
                         Find Path
                         </button>
                         <br></br>
-                        {payButtonState && <button className="btn-btn-secondary" onClick={handlePtpPayment} style={{ marginLeft: "10px" }}>
+                        {payButtonState && <button className="btn-btn-primary" onClick={handlePtpPayment} style={{ marginLeft: "10px" }}>
                             Pay
                         </button>}
                     </div>
