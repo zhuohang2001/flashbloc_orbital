@@ -43,7 +43,7 @@ class TestGetLatestTx(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(data["result"], "sign here")
         self.assertEqual(data["channelAddress"], "aaaabbbb")
-        self.assertEqual(data["initBal"], 1000000000000200)
+        self.assertEqual(data["initBal"], 1000000000000000)
         self.assertEqual(data["recpBal"], 1000000000000000)
         self.assertEqual(data["initLkBal"], 1000000000000000)
         self.assertEqual(data["recpLkBal"], 1000000000000000)

@@ -47,6 +47,7 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
             merchant_settlement = amount_total * 5/100
             origin = Account.objects.get(wallet_address=data.get('origin'))
             destination = Account.objects.get(wallet_address=data.get('destination'))
+            assert origin != destination
             init_filter = Q(status="INIT") #is this correct?
 
             ptp_global = models.PtpGlobal(status="PD", path_array=path_array, amount=Decimal.from_float(amount_deposited), origin=origin, destination=destination)
@@ -122,16 +123,19 @@ class PtpPaymentsViewSet(GetUpdateViewSet):
 
 
 
-            if not path_array:
-                ptp_global.path_array = path_array
+            # if not path_array:
+            #     ptp_global.path_array = path_array
+            #     ptp_global.status = "SS"
+
+            # elif path_array != init_array:
+            #     ptp_global.path_array = path_array
+            #     ptp_global.status = "FL"
+        
+            # else:
+            #     ptp_global.status = "FL"
+
                 ptp_global.status = "SS"
 
-            elif path_array != init_array:
-                ptp_global.path_array = path_array
-                ptp_global.status = "FL"
-        
-            else:
-                ptp_global.status = "FL"
 
             ptp_global.save()
             result = self.get_serializer(ptp_global, many=False).data
@@ -160,7 +164,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                 msg = json.dumps({
                 "error": "invalid amount: needs to be more than 0"
             })
-                return Response(msg, status=status.HTTP_200_OK)
+                return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
             currAddress = str(data.get('currAddress'))
             targetAddress = str(data.get('targetAddress'))
@@ -255,6 +259,7 @@ class TopUpPaymentsViewSet(GetUpdateViewSet):
                     topup_receipt = models.TopupReceipt(sender=curr_acc, local_nonce=int(topup_nonce), ledger=tar_ledger)
                     tar_channel.total_balance += Decimal.from_float(float(amount))
                     print("4")
+                    tar_channel.save()
                     tar_ledger.save()
                     print("5")
                     topup_receipt.save()

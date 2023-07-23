@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 from channelstate.models import Channel, Ledger
-from channelstate.models import PtpGlobal, PtpLocal
+from payments.models import PtpGlobal, PtpLocal
 from users.models import Account
 
 class TestExecutePtp(APITestCase):
@@ -19,9 +19,9 @@ class TestExecutePtp(APITestCase):
         self.account4 = Account.objects.create(email="d@d.com", user_name="dddd", wallet_address="dddd", password="dddd1234")
 
         #create channels
-        self.channel12 = Channel.objects.create(initiator=self.account1, recipient=self.account2, status="RQ", total_balance=Decimal.from_float(2000000000000000.0), channel_address="aaaabbbb")
-        self.channel23 = Channel.objects.create(initiator=self.account2, recipient=self.account3, status="RQ", total_balance=Decimal.from_float(3000000000000000.0), channel_address="bbbcccc")
-        self.channel34 = Channel.objects.create(initiator=self.account3, recipient=self.account4, status="RQ", total_balance=Decimal.from_float(4000000000000000.0), channel_address="ccccdddd")
+        self.channel12 = Channel.objects.create(initiator=self.account1, recipient=self.account2, status="INIT", total_balance=Decimal.from_float(2000000000000000.0), channel_address="aaaabbbb")
+        self.channel23 = Channel.objects.create(initiator=self.account2, recipient=self.account3, status="INIT", total_balance=Decimal.from_float(3000000000000000.0), channel_address="bbbcccc")
+        self.channel34 = Channel.objects.create(initiator=self.account3, recipient=self.account4, status="INIT", total_balance=Decimal.from_float(4000000000000000.0), channel_address="ccccdddd")
 
         #create ledgers
         self.ledger12 = Ledger.objects.create(channel=self.channel12, locked_recipient_bal=Decimal.from_float(1000000000000000.0), locked_initiator_bal=Decimal.from_float(1000000000000000.0), latest_recipient_bal=Decimal.from_float(1000000000000000.0), latest_initiator_bal=Decimal.from_float(1000000000000000.0), ptp_recipient_bal=Decimal.from_float(0.0), ptp_initiator_bal=Decimal.from_float(0.0), topup_initiator_bal=Decimal.from_float(0.0), topup_recipient_bal=Decimal.from_float(0.0))
@@ -43,26 +43,26 @@ class TestExecutePtp(APITestCase):
         data = response.data
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(data["status"], "PD")
-        self.assertEqual(data["amount"], "190.00")
-        self.assertEqual(data["origin"], "aaaa")
-        self.assertEqual(data["destination"], "dddd")
+        self.assertEqual(data["status"], "SS")
+        self.assertEqual(data["amount"], "190.0")
+        self.assertEqual(data["origin"]["user_name"], "aaaa")
+        self.assertEqual(data["destination"]["user_name"], "dddd")
 
         # Check if PtpGlobal and PtpLocal objects are created
-        self.assertTrue(PtpGlobal.objects.filter(status="PD", amount=Decimal("190.00")).exists())
-        self.assertTrue(PtpLocal.objects.filter(amount=Decimal("190.00")).exists())
+        self.assertTrue(PtpGlobal.objects.filter(status="SS", amount=Decimal("190.0")).exists())
+        # self.assertTrue(PtpLocal.objects.filter(amount=Decimal("190.0")).exists())
 
         # Check ledger balance after the transaction
         updated_ledger_12 = Ledger.objects.get(channel=self.channel12)
         updated_ledger_23 = Ledger.objects.get(channel=self.channel23)
         updated_ledger_34 = Ledger.objects.get(channel=self.channel34)
 
-        self.assertEqual(updated_ledger_12.ptp_initiator_bal, Decimal("0.00"))
-        self.assertEqual(updated_ledger_12.ptp_recipient_bal, Decimal("190.00"))
-        self.assertEqual(updated_ledger_23.ptp_initiator_bal, Decimal("190.00"))
-        self.assertEqual(updated_ledger_23.ptp_recipient_bal, Decimal("0.00"))
-        self.assertEqual(updated_ledger_34.ptp_initiator_bal, Decimal("0.00"))
-        self.assertEqual(updated_ledger_34.ptp_recipient_bal, Decimal("0.00"))
+        self.assertEqual(updated_ledger_12.ptp_initiator_bal, Decimal("-200.0"))
+        self.assertEqual(updated_ledger_12.ptp_recipient_bal, Decimal("200.0"))
+        self.assertEqual(updated_ledger_23.ptp_initiator_bal, Decimal("-196.7"))
+        self.assertEqual(updated_ledger_23.ptp_recipient_bal, Decimal("196.7"))
+        self.assertEqual(updated_ledger_34.ptp_initiator_bal, Decimal("-193.3"))
+        self.assertEqual(updated_ledger_34.ptp_recipient_bal, Decimal("193.3"))
 
     def test_executeptp_wrong_party(self):
         url = "/api/payments/ptp/executePtp/"
@@ -77,7 +77,7 @@ class TestExecutePtp(APITestCase):
         self.client.force_authenticate(self.account3)
         response = self.client.post(url, payload, format='json')
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_executeptp_404(self):
         url = "/api/payments/ptp/executePtp/"

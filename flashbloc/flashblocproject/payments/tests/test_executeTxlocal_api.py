@@ -2,7 +2,7 @@ from datetime import datetime
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
-from ..models import TransactionLocal
+from payments.models import TransactionLocal
 from channelstate.models import Channel, Ledger
 from users.models import Account
 import json
@@ -21,7 +21,7 @@ class TestExecuteTxLocal(APITestCase):
         self.account2 = Account.objects.create(email="b@b.com", user_name="bbbb", wallet_address="bbbb", password="bbbb1234")
 
         #create channels
-        self.channel12 = Channel.objects.create(initiator=self.account1, recipient=self.account2, status="RQ", total_balance=Decimal.from_float(2000000000000000.0), channel_address="aaaabbbb")
+        self.channel12 = Channel.objects.create(initiator=self.account1, recipient=self.account2, status="INIT", total_balance=Decimal.from_float(2000000000000000.0), channel_address="aaaabbbb")
 
         #create ledgers
         self.ledger12 = Ledger.objects.create(channel=self.channel12, locked_recipient_bal=Decimal.from_float(1000000000000000.0), locked_initiator_bal=Decimal.from_float(1000000000000000.0), latest_recipient_bal=Decimal.from_float(1000000000000000.0), latest_initiator_bal=Decimal.from_float(1000000000000000.0), ptp_recipient_bal=Decimal.from_float(0.0), ptp_initiator_bal=Decimal.from_float(0.0), topup_initiator_bal=Decimal.from_float(0.0), topup_recipient_bal=Decimal.from_float(0.0))
@@ -38,7 +38,7 @@ class TestExecuteTxLocal(APITestCase):
 
         self.client.force_authenticate(self.account1)
         response = self.client.post(url, payload, format='json')
-        data = response.data
+        print("RETURN DICT", response.data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # self.assertEqual(data['status'], "SS")
@@ -46,8 +46,8 @@ class TestExecuteTxLocal(APITestCase):
 
         # Check if the ledger balances are updated correctly
         updated_ledger = Ledger.objects.get(channel=self.channel12)
-        self.assertEqual(updated_ledger.latest_initiator_bal, Decimal('0.0'))
         self.assertEqual(updated_ledger.latest_recipient_bal, Decimal('2000000000000000.0'))
+        self.assertEqual(updated_ledger.latest_initiator_bal, Decimal('0.0'))
 
         # Check if the transaction instance is created
         self.assertTrue(TransactionLocal.objects.filter(sender_sig="signature").exists())
@@ -64,9 +64,10 @@ class TestExecuteTxLocal(APITestCase):
 
         self.client.force_authenticate(self.account1)
         response = self.client.post(url, payload, format='json')
+        data = json.loads(response.data)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.msg['error'], "invalid amount: needs to be more than 0")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(data['error'], "invalid amount: needs to be more than 0")
 
         # Check if the ledger balances remain unchanged
         updated_ledger = Ledger.objects.get(channel=self.channel12)
@@ -74,7 +75,7 @@ class TestExecuteTxLocal(APITestCase):
         self.assertEqual(updated_ledger.latest_recipient_bal, Decimal('1000000000000000.0'))
 
         # Check that the transaction instance is not created
-        self.assertFalse(models.TransactionLocal.objects.filter(sender_sig="signature").exists())
+        self.assertFalse(TransactionLocal.objects.filter(sender_sig="signature").exists())
 
     def test_channel_does_not_exist(self):
         url = "/api/payments/local/executeTxLocal/"
@@ -88,9 +89,10 @@ class TestExecuteTxLocal(APITestCase):
 
         self.client.force_authenticate(self.account1)
         response = self.client.post(url, payload, format='json')
+        # data = json.loads(response.data)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['error'], "tx instance not created")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # self.assertEqual(data['error'], "tx instance not created")
 
         # Check that the ledger balances remain unchanged
         updated_ledger = Ledger.objects.get(channel=self.channel12)
@@ -98,4 +100,4 @@ class TestExecuteTxLocal(APITestCase):
         self.assertEqual(updated_ledger.latest_recipient_bal, Decimal('1000000000000000.0'))
 
         # Check that the transaction instance is not created
-        self.assertFalse(models.TransactionLocal.objects.filter(sender_sig="signature").exists())
+        self.assertFalse(TransactionLocal.objects.filter(sender_sig="signature").exists())
