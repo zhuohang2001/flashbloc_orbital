@@ -26,13 +26,13 @@ const ChannelDetail = () => {
     let signer = tempProvider.getSigner()
     const curr_channel_contract = new ethers.Contract(curr_channel.channel_address, contract_abi, signer)
 
-    showToastSuccessActionMessage = (action) => {
+    const showToastSuccessActionMessage = (action) => {
         toast.success(`Successful ${action} !`, {
             position: toast.POSITION.TOP_RIGHT
         });
     };
 
-    showToastErrorActionMessage = () => {
+    const showToastErrorActionMessage = (action) => {
         toast.error(`Error while making ${action} !`, {
             position: toast.POSITION.TOP_CENTER
         });

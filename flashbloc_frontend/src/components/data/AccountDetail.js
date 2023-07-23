@@ -6,8 +6,7 @@ import { currentChannel, editCurrentChannelPay, editCurrentChannelTopup } from '
 import { Contract, ethers } from 'ethers'
 import contract_abi from '../abi/contract_abi.json'
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+
 
 import { topup_channel } from '../../contract_methods/channel_methods'
 
@@ -27,25 +26,25 @@ const AccountDetail = () => {
 
     const curr_account = useSelector((state) => state.accounts.value.current)
 
-    showToastSuccessPaymentMessage = () => {
+    const showToastSuccessPaymentMessage = () => {
         toast.success('Successful payment !', {
             position: toast.POSITION.TOP_RIGHT
         });
     };
 
-    showToastErrorPaymentMessage = () => {
+    const showToastErrorPaymentMessage = () => {
         toast.error('Error while making payment !', {
             position: toast.POSITION.TOP_CENTER
         });
     };
 
-    showToastSuccessPathMessage = () => {
+    const showToastSuccessPathMessage = () => {
         toast.success('Successful path found !', {
             position: toast.POSITION.TOP_RIGHT
         });
     };
 
-    showToastErrorPathMessage = () => {
+    const showToastErrorPathMessage = () => {
         toast.error('No path found !', {
             position: toast.POSITION.TOP_CENTER
         });
@@ -143,7 +142,7 @@ const AccountDetail = () => {
                         value={transactionAmtState}
                         onChange={(e) => setTransactionAmt(e.target.value)}
                         />
-                        <button className="btn btn-primary" onClick={handleSearchPath} style={{ marginLeft: '10px' }}>
+                        <button className="btn btn-primary" onClick={handleSearchPaymentPath} style={{ marginLeft: '10px' }}>
                         Find Path
                         </button>
                         <br></br>
