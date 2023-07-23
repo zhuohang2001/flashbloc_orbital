@@ -284,7 +284,7 @@ useEffect(() => handleFilter(), [channels])
           <h2 style={{ color: 'black' }}>Pending Approval</h2>
           <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px', flex: 1 }}>
             {filteredData
-              .filter(item => item.status == "RQ")
+              .filter(item => item.status == "RQ" & item.recipient == loginAccount)
               .map((item, index) => (
                 <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
                   {item.recipient} - {item.status}
@@ -348,7 +348,7 @@ useEffect(() => handleFilter(), [channels])
           <h2 style={{ color: 'black' }}>Pending Initialization</h2>
           <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px', flex: 1 }}>
             {filteredData
-              .filter(item => item.status == "OP")
+              .filter(item => item.status == "OP" & item.recipient == loginAccount)
               .map((item, index) => (
                 <div key={index} style={{ color: 'black', margin: '5px', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}>
                   {item.recipient} - {item.status}

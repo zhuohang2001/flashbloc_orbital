@@ -94,6 +94,7 @@ const AccountDetail = () => {
 
     return (
         <Fragment>
+             <ToastContainer/>
             <h1>Account Details</h1>
             <div className="container">
                     <div className="row" style={{ display: "flex", flexDirection: 'row' }}>

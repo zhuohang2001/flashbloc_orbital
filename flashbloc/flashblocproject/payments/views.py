@@ -216,7 +216,7 @@ class LocalPaymentsViewSet(GetUpdateViewSet):
                 return Response(result, status=status.HTTP_200_OK)       
 
             msg = json.dumps({
-                "status": "tx instance not created"
+                "status ": "tx instance not created"
             })
             return Response(msg, status=status.HTTP_200_OK)
 
@@ -253,6 +253,7 @@ class TopUpPaymentsViewSet(GetUpdateViewSet):
                     else:
                         tar_ledger.ptp_recipient_bal += Decimal.from_float(float(amount))
                     topup_receipt = models.TopupReceipt(sender=curr_acc, local_nonce=int(topup_nonce), ledger=tar_ledger)
+                    tar_channel.total_balance += Decimal.from_float(float(amount))
                     print("4")
                     tar_ledger.save()
                     print("5")

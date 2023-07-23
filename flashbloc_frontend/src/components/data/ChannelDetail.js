@@ -27,12 +27,14 @@ const ChannelDetail = () => {
     const curr_channel_contract = new ethers.Contract(curr_channel.channel_address, contract_abi, signer)
 
     const showToastSuccessActionMessage = (action) => {
+        console.log("showwing success toast")
         toast.success(`Successful ${action} !`, {
             position: toast.POSITION.TOP_RIGHT
         });
     };
 
     const showToastErrorActionMessage = (action) => {
+        console.log("showwing error toast")
         toast.error(`Error while making ${action} !`, {
             position: toast.POSITION.TOP_CENTER
         });
@@ -92,9 +94,9 @@ const ChannelDetail = () => {
                 "amt": transactionAmtState
             }))
             if (res.data.status == "SS") {
-                this.showToastSuccessActionMessage('payment')
+                showToastSuccessActionMessage('payment')
             } else {
-                this.showToastErrorActionMessage('payment')
+                showToastErrorActionMessage('payment')
             }
             }
         )
@@ -132,9 +134,9 @@ const ChannelDetail = () => {
                                         "amt": topupAmtState
                                     }))
                                     console.log("topup success")
-                                    this.showToastSuccessActionMessage('topup')
+                                    showToastSuccessActionMessage('topup')
                                 } else {
-                                    this.showToastErrorActionMessage('topup')
+                                    showToastErrorActionMessage('topup')
                                 }
                             })
                 }
@@ -145,6 +147,7 @@ const ChannelDetail = () => {
 
     return (
         <Fragment>
+             <ToastContainer/>
             <h1>Channel Details</h1>
             <div className="container">
                     <div className="row" style={{ display: "flex", flexDirection: 'row' }}>
