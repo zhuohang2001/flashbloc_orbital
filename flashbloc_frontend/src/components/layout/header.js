@@ -82,9 +82,9 @@ function Header() {
 							component={NavLink}
 							to="/"
 							underline="none"
-							color="textPrimary"
+							color="white"
 						>
-							{loginAccount.walletAddress}
+							{loginAccount.username}
 						</Link>
 					</nav>
 

@@ -84,7 +84,7 @@ const ContainerPage = () => {
             padding: '10px'
           }}
         >
-          <h2 style={{ color: 'black' }}>Filtered Accounts</h2>
+          <h2 style={{ color: 'black' }}>Accounts</h2>
           <div style={{ maxHeight: '300px', overflowY: 'scroll', flexWrap: 'wrap', flexDirection: 'row', width: '500px', flex: 1 }}>
             {filteredData
               .map((item, index) => (

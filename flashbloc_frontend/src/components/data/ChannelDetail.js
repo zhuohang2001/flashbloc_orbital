@@ -153,7 +153,7 @@ const ChannelDetail = () => {
                     <div className="row" style={{ display: "flex", flexDirection: 'row' }}>
                         <div className="col-lg-6">
                             <div className="card textPrimary bg-info">
-                                <div className="card-header">Header</div>
+                                {/* <div className="card-header">Header</div> */}
                                     <div className="card-body">
                                         <h5 className="card-title">Account Info</h5>
                                         <ul>
@@ -167,7 +167,7 @@ const ChannelDetail = () => {
 
                         <div className="col-lg-6">
                             <div className="card textPrimary bg-info">
-                                <div className="card-header">Header</div>
+                                {/* <div className="card-header">Header</div> */}
                                     <div className="card-body">
                                         <h5 className="card-title">Account Balances</h5>
                                         <ul>
