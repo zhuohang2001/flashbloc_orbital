@@ -19,6 +19,8 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const CssTextField = withStyles({
 	root: {
@@ -79,6 +81,12 @@ export default function SignIn() {
 
 	const [formData, updateFormData] = useState(initialFormData);
 
+    const showToastErrorMessage = () => {
+        toast.error('Sign in error !', {
+            position: toast.POSITION.TOP_CENTER
+        });
+    };
+
 	const handleChange = (e) => {
 		updateFormData({
 			...formData,
@@ -86,12 +94,13 @@ export default function SignIn() {
 		});
 	};
 
-    const clicked = () => {
+    const clicked = async () => {
         dispatch(toggleLoginState({
             Login: true
         }))
 
-		axiosInstance.get(`user/account/currLogin/${formData.email}/`)
+		if (localStorage.getItem('access_token')) {
+			axiosInstance.get(`user/account/currLogin/${formData.email}/`)
 			.then((response) => {
 				dispatch(currentLoginAccount({
 					'email': response.data.email, 
@@ -102,17 +111,18 @@ export default function SignIn() {
 				localStorage.setItem('email', response.data.email)
 				localStorage.setItem('username', response.data.user_name)
 				localStorage.setItem('walletAddress', response.data.wallet_address)
-				
+				navigate('/');
 			}
 			)
+		}
 
     }
 
-	const handleSubmit = (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
 		console.log(formData);
 
-		axiosInstance
+		await axiosInstance
 			.post(`token/`, {
 				email: formData.email,
 				password: formData.password,
@@ -122,16 +132,18 @@ export default function SignIn() {
 				localStorage.setItem('refresh_token', res.data.refresh);
 				axiosInstance.defaults.headers['Authorization'] =
 					'JWT ' + localStorage.getItem('access_token');
-				navigate('/');
 				//console.log(res);
 				//console.log(res.data);
-			});
+
+			})
+			.catch((error) => showToastErrorMessage())
 	};
 
 	const classes = useStyles();
 
 	return (
 		<Container component="main" maxWidth="xs">
+			<ToastContainer/>
 			<CssBaseline />
 			<div className={classes.paper}>
 				<Avatar className={classes.avatar}></Avatar>
@@ -173,7 +185,7 @@ export default function SignIn() {
 						variant="contained"
 						color="secondary"
 						className={classes.submit}
-						onClick={(e) => { handleSubmit(e); clicked(); }}
+						onClick={ async (e) => { await handleSubmit(e); await clicked(); }}
 					>
 						Sign In
 					</Button>

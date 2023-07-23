@@ -34,7 +34,7 @@ class TestGetLatestTx(APITestCase):
         self.ledger12.save()
 
     def test_getlatesttx_correct(self):
-        url="/api/channelstate/getLatestTx/?currAddress=aaaa&channelAddress=aaaabbbb"
+        url="/api/channelstate/getLatestTx/?currAddress=bbbb&channelAddress=aaaabbbb"
 
         self.client.force_authenticate(self.account1)
         response = self.client.get(url, format='json')

@@ -119,7 +119,7 @@ function Header() {
 					>
 						Logout
 					</Button>
-					<Button
+					{loginAccount.walletAddress && <Button
 					aria-controls="dropdown-menu"
 					aria-haspopup="true"
 					onClick={handleMenuClick}
@@ -128,7 +128,7 @@ function Header() {
 					className={classes.link}
 					>
 					Menu
-					</Button>
+					</Button>}
 					<Menu
 						id="dropdown-menu"
 						anchorEl={anchorEl}
@@ -141,6 +141,9 @@ function Header() {
 						</MenuItem>
 						<MenuItem onClick={handleMenuClose} component={NavLink} to="/ChannelsDB">
 							Channels DB
+						</MenuItem>
+						<MenuItem onClick={handleMenuClose} component={NavLink} to="/AccountsDB">
+							Accounts
 						</MenuItem>
             		</Menu>
 					{loginAccount.walletAddress && <ConnectWeb3/>}
