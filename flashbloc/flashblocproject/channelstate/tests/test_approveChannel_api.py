@@ -64,7 +64,7 @@ class TestApproveChannel(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_approvechannel_404(self):
+    def test_approvechannel_301(self):
         url="/api/channelstate/approveChannel"
 
         payload={

@@ -77,7 +77,7 @@ class testDeclareCloseChannel(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_declareclosechannel_400(self):
+    def test_declareclosechannel_301(self):
         url="/api/channelstate/declareCloseChannel"
 
         payload = {

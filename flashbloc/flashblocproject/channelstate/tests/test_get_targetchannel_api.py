@@ -60,8 +60,8 @@ class TestGetTargetChannel(APITestCase):
         self.assertEqual(s["channel_address"], "aaaabbbb")
         self.assertEqual(s["ledger"]["locked_initiator_bal"], "1000000000000000.0")
 
-    def test_get_targetchannels_404(self):
-        url = "/api/channelstate/get_userChannels/?currAddress=xxxx"
+    def test_get_targetchannel_404(self):
+        url = "/api/channelstate/get_targetChannels/?currAddress=xxxx"
 
         self.client.force_authenticate(self.account1)
         response = self.client.get(url, format='json')
