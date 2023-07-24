@@ -71,11 +71,12 @@ const ContainerPage = () => {
           Search
         </button>
       </div>
-      <div style={{ display: 'flex', margin: '20px', flexWrap: 'wrap', flexDirection: 'row', flex: 1 }}>
+      <div style={{ display: 'flex', margin: '0px', width: '1400px', flexWrap: 'wrap', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
         <div
           style={{
-            flex: '1',
-            margin: '0 10px',
+            // flex: '1',
+            width: '1000px',
+            margin: '10px',
             overflowY: 'auto',
             color: 'white',
             backgroundColor: '#F2F2F2',

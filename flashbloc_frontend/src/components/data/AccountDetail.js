@@ -100,9 +100,9 @@ const AccountDetail = () => {
                     <div className="row" style={{ display: "flex", flexDirection: 'row' }}>
                         <div className="col-lg-6">
                             <div className="card textPrimary bg-info">
-                                <div className="card-header">Header</div>
+                                {/* <div className="card-header">Header</div> */}
                                     <div className="card-body">
-                                        <h5 className="card-title">Account Info</h5>
+                                        <h5 className="card-title">Account Details</h5>
                                         <ul>
                                             <li key={curr_account.wallet_address}>Address: {curr_account.wallet_address} </li>
                                             <br></br>
@@ -115,8 +115,8 @@ const AccountDetail = () => {
                         </div>
 
                         <div className="col-lg-6">
-                            <div className="card textPrimary bg-info">
-                                <div className="card-header">Header</div>
+                            <div className="card textPrimary bg-info" style={{ display: "flex", flexDirection: 'row', height: '165px' }}>
+                                {/* <div className="card-header">Header</div> */}
                                     <div className="card-body">
                                         <h5 className="card-title">Account Balances</h5>
                                         <ul>
@@ -139,7 +139,7 @@ const AccountDetail = () => {
                         min="0"
                         className="form-control"
                         style={{ width: '50%' }}
-                        placeholder="Search"
+                        placeholder="Amount"
                         value={transactionAmtState}
                         onChange={(e) => setTransactionAmt(e.target.value)}
                         />

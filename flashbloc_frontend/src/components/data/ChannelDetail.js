@@ -155,7 +155,7 @@ const ChannelDetail = () => {
                             <div className="card textPrimary bg-info">
                                 {/* <div className="card-header">Header</div> */}
                                     <div className="card-body">
-                                        <h5 className="card-title">Account Info</h5>
+                                        <h5 className="card-title">Account Details</h5>
                                         <ul>
                                             <li key={curr_channel.channel_address}>Address: {curr_channel.channel_address} </li>
                                             <br></br>
@@ -189,7 +189,7 @@ const ChannelDetail = () => {
                         max={maxPayableState}
                         className="form-control"
                         style={{ width: '50%' }}
-                        placeholder="Search"
+                        placeholder="Amount"
                         value={transactionAmtState}
                         onChange={(e) => setTransactionAmt(e.target.value)}
                         />
@@ -203,7 +203,7 @@ const ChannelDetail = () => {
                         min="0"
                         className="form-control"
                         style={{ width: '50%' }}
-                        placeholder="Search"
+                        placeholder="Amount"
                         value={topupAmtState}
                         onChange={(e) => setTopupAmt(e.target.value)}
                         />
