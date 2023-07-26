@@ -62,7 +62,7 @@ contract SimplePaymentChannel {
     function declare_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, int _ptp_init, int _ptp_recp) public returns (bool) {
         //used when a party wants to close
         require(msg.sender == Parties[1].addr || msg.sender == Parties[2].addr);
-        require(_init_bal + _recp_bal <= Parties[1].bal + Parties[2].bal);
+        require(uint(int(_init_bal) + int(_recp_bal) + _ptp_init + _ptp_recp) <= Parties[1].bal + Parties[2].bal);
         require(_signature.length == 2);
         require((keccak256(abi.encodePacked(_signature[0])) != keccak256(abi.encodePacked(_signature[1]))));
         uint amt = 0;
@@ -87,7 +87,7 @@ contract SimplePaymentChannel {
     }
 
     function challenge_close(bytes [2] memory _signature, uint _nonce, uint _init_bal, uint _recp_bal, int _ptp_init, int _ptp_recp) public returns (bool) {
-        require(_init_bal + _recp_bal <= Parties[1].bal + Parties[2].bal);
+        require(uint(int(_init_bal) + int(_recp_bal) + _ptp_init + _ptp_recp) <= Parties[1].bal + Parties[2].bal);
         require(_signature.length == 2);
         require((keccak256(abi.encodePacked(_signature[0])) != keccak256(abi.encodePacked(_signature[1]))));
         uint amt = 0;

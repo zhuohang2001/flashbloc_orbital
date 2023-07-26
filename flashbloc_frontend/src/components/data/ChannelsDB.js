@@ -190,7 +190,7 @@ useEffect(() => handleFilter(), [channels])
     if (item.initiator == loginAccount) {
       tarAcc = item.recipient
     }
-    const signArr = await sign_latest_tx(loginAccount, item.channel_address)
+    const signArr = await sign_locked_tx(loginAccount, item.channel_address)
     console.log(signArr, "CLOSING SIGN ARR")
     const signedMsg = signArr[0]
     const signedStatus = signArr[1]

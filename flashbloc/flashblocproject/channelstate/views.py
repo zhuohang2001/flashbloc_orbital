@@ -469,6 +469,46 @@ class channelStateView(GetUpdateViewSet):
             return Response(e.args, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['POST'])
+    def signCloseLatestTx(self, request, *args, **kwargs):
+        try:
+            data = self.request.data
+            currAddress = data.get("currAddress")
+            txSig = data.get("txSignature")
+            nonce = data.get("nonce")
+            channelAddress = data.get("channelAddress")
+            tar_channel = models.Channel.objects.get(channel_address=channelAddress)
+            curr_account = Account.objects.get(wallet_address=currAddress)
+            if tar_channel:
+                tar_ledger = tar_channel.ledger
+                if tar_channel.status != "CD":
+                    latest_tx = tar_ledger.latest_tx
+                    with transaction.atomic():
+                        if latest_tx.receiver == curr_account and latest_tx.local_nonce == int(nonce):
+                            latest_tx.receiver_sig = str(txSig)
+                            latest_tx.save()
+
+                            tar_ledger.locked_initiator_bal = tar_ledger.latest_initiator_bal
+                            tar_ledger.locked_recipient_bal = tar_ledger.latest_recipient_bal
+                            tar_ledger.locked_tx = tar_ledger.latest_tx
+                            # tar_channel.status = "INIT" #why change to init?
+                            tar_channel.save()
+                            tar_ledger.save()
+                
+                info_dict = {
+                    "result": "success", 
+                    "signed_sig": latest_tx.receiver_sig
+                }
+                res = json.dumps(info_dict)
+                return Response(res, status=status.HTTP_200_OK)
+            
+            msg = {"result": "no valid tx to sign"}     
+            res = json.dumps(msg)
+            return Response(res, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(e.args, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['POST'])
     def retrieve_sigs(self, request, *args, **kwargs):
         try: 
             info_dict = {}

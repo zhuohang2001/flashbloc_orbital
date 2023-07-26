@@ -67,7 +67,7 @@ export const sign_locked_tx = async (currAddress, channelAddress) => { //how to 
                 [data.channelAddress.toLowerCase(), 0, parseInt(data.initBal) + ";" + parseInt(data.recpBal), data.latestNonce])
                 signedMessage = await signer.signMessage(ethers.utils.arrayify(hashedMsg))
 
-                await axiosInstance.post(`channelstate/signLatestTx/`, {
+                await axiosInstance.post(`channelstate/signCloseLatestTx/`, {
                     currAddress: currAddress, 
                     channelAddress: channelAddress, 
                     txSignature: signedMessage, 

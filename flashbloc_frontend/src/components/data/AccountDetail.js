@@ -57,6 +57,9 @@ const AccountDetail = () => {
                 const path = data.path
                 if (path != []) {
                     //display pay button
+                    console.log('path')
+                    console.log(path)
+                    console.log(data)
                     setPaymentPathState(path)
                     setPayButtonState(true)
                     showToastSuccessPathMessage()
