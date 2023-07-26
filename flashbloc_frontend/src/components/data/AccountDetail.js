@@ -59,10 +59,10 @@ const AccountDetail = () => {
                     //display pay button
                     setPaymentPathState(path)
                     setPayButtonState(true)
-                    this.showToastSuccessPathMessage()
+                    showToastSuccessPathMessage()
                 } else {
                     //display no viable path logo
-                    this.showToastErrorPathMessage()
+                    showToastErrorPathMessage()
                 }   
             })
     }
@@ -78,10 +78,10 @@ const AccountDetail = () => {
             .then((data) => {
                 if (data.status == "SS") {
                     //display success toast msg
-                    this.showToastSuccessPaymentMessage()
+                    showToastSuccessPaymentMessage()
                 } else {
                     //display failure toast msg
-                    this.showToastErrorPaymentMessage()
+                    showToastErrorPaymentMessage()
                 }
             })
     }
@@ -147,7 +147,7 @@ const AccountDetail = () => {
                         Find Path
                         </button>
                         <br></br>
-                        {payButtonState && <button className="btn-btn-primary" onClick={handlePtpPayment} style={{ marginLeft: "10px" }}>
+                        {payButtonState && <button className="btn btn-primary" onClick={handlePtpPayment} style={{ marginLeft: "10px" }}>
                             Pay
                         </button>}
                     </div>
